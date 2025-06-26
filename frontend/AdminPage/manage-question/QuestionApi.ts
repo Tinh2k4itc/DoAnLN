@@ -6,6 +6,7 @@ export interface QuestionOption {
 }
 
 export interface Question {
+  questionBankId: string;
   id?: string;
   bankId: string;
   content: string;
