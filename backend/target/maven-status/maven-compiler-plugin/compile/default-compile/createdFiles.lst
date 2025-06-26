@@ -1,0 +1,7 @@
+com\example\coursemanagement\dto\CourseDTO.class
+com\yourcompany\onlineexam\config\FirebaseConfig.class
+com\yourcompany\onlineexam\OnlineExamApplication.class
+com\yourcompany\onlineexam\controller\CourseController.class
+com\yourcompany\onlineexam\model\User.class
+com\yourcompany\onlineexam\model\Course.class
+com\yourcompany\onlineexam\service\CourseService.class
