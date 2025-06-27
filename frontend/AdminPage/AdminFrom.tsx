@@ -3,6 +3,10 @@ import React, { useState } from 'react';
 import Sidebar from './left-bar/Sidebar';
 import CourseCreateForm from './manage-course/CourseCreateForm';
 import CourseUpdateForm from  './manage-course/CourseUpdateForm';
+import ManageCourse from './manage-course/ManageCourse';
+import ManagePart from './manage-part/ManagePart';
+import ManageQuestion from './manage-question/ManageQuestion';
+import ManageUser from './manage-user/ManageUser';
 
 const AdminForm: React.FC = () => {
   const [activeSection, setActiveSection] = useState<string>('dashboard');
@@ -10,12 +14,13 @@ const AdminForm: React.FC = () => {
   const renderActiveSection = () => {
     switch (activeSection) {
       case 'manage-courses':
-        return (
-          <div className="space-y-6">
-            <CourseCreateForm />
-            <CourseUpdateForm />
-          </div>
-        );
+        return <ManageCourse />;
+      case 'manage-parts':
+        return <ManagePart />;
+      case 'manage-questions':
+        return <ManageQuestion />;
+      case 'manage-users':
+        return <ManageUser />;
       case 'dashboard':
       default:
         return (
