@@ -14,6 +14,11 @@ export interface SidebarItemInfo {
   action?: () => void;
 }
 
+export interface SidebarProps {
+  activeItemId?: string;
+  onItemClick?: (id: string) => void;
+}
+
 import {
   CubeTransparentIcon,
   ChevronRightIcon,
@@ -26,30 +31,33 @@ import {
   Cog6ToothIcon, // Settings
   BellIcon, // Notifications
   ArrowRightOnRectangleIcon, // Logout
+  ClipboardDocumentListIcon, // Tests
 } from './icons'; // Adjusted path
 
 const mainNavItems: SidebarItemInfo[] = [
-  { id: 'my-courses', label: 'My Courses', icon: AcademicCapIcon },
-  { id: 'my-assignments', label: 'My Assignments', icon: DocumentTextIcon },
-  { id: 'my-grades', label: 'My Grades', icon: ChartBarIcon },
+  { id: 'dashboard', label: 'Dashboard', icon: AcademicCapIcon },
+  { id: 'courses', label: 'Khóa học', icon: AcademicCapIcon },
+  { id: 'tests', label: 'Bài thi', icon: ClipboardDocumentListIcon },
+  { id: 'my-assignments', label: 'Bài tập của tôi', icon: DocumentTextIcon },
+  { id: 'my-grades', label: 'Điểm số của tôi', icon: ChartBarIcon },
 ];
 
 const accountNavItems: SidebarItemInfo[] = [
-  { id: 'profile', label: 'Profile', icon: UserCircleIcon },
-  { id: 'settings', label: 'Settings', icon: Cog6ToothIcon },
-  { id: 'notifications', label: 'Notifications', icon: BellIcon },
+  { id: 'profile', label: 'Hồ sơ', icon: UserCircleIcon },
+  { id: 'settings', label: 'Cài đặt', icon: Cog6ToothIcon },
+  { id: 'notifications', label: 'Thông báo', icon: BellIcon },
 ];
 
-const Sidebar: React.FC = () => {
-  const [activeItemId, setActiveItemId] = useState<string>('my-courses');
+const Sidebar: React.FC<SidebarProps> = ({ activeItemId = 'dashboard', onItemClick }) => {
   const [isExpanded, setIsExpanded] = useState<boolean>(true);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const handleItemClick = useCallback((id: string) => {
-    setActiveItemId(id);
-    // In a real app, this would trigger navigation or content update in UserForm.tsx
+    if (onItemClick) {
+      onItemClick(id);
+    }
     console.log(`Student sidebar item clicked: ${id}`);
-  }, []);
+  }, [onItemClick]);
 
   const toggleExpand = useCallback(() => {
     setIsExpanded(prev => !prev);
@@ -109,7 +117,7 @@ const Sidebar: React.FC = () => {
           <input
             ref={searchInputRef}
             type="search"
-            placeholder="Search..."
+            placeholder="Tìm kiếm..."
             aria-label="Search"
             className="w-full bg-slate-800 border border-slate-700/60 text-slate-200 placeholder-slate-500 rounded-lg py-2 pl-10 pr-3 focus:ring-1 focus:ring-sky-500 focus:border-sky-500 focus:outline-none text-sm"
           />
@@ -127,7 +135,7 @@ const Sidebar: React.FC = () => {
             <MagnifyingGlassIcon className="w-5 h-5 md:w-6 md:h-6" />
           </button>
            <div className="absolute left-full ml-3 px-3 py-2 text-sm font-medium text-white bg-slate-800/95 backdrop-blur-sm rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none transform translate-x-[-8px] group-hover:translate-x-0 z-50" role="tooltip">
-            Search
+            Tìm kiếm
             <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-800/95 transform rotate-45"></div>
           </div>
         </div>
@@ -149,7 +157,7 @@ const Sidebar: React.FC = () => {
 
       {/* Account Navigation Items & Profile */}
       <div className={`mt-auto pt-3 border-t w-full ${isExpanded ? 'border-slate-700/60' : 'border-slate-700 flex flex-col items-center'}`}>
-        {isExpanded && <h3 className="px-3 pt-1 pb-1 text-xs font-semibold text-slate-500 uppercase tracking-wider">Account</h3>}
+        {isExpanded && <h3 className="px-3 pt-1 pb-1 text-xs font-semibold text-slate-500 uppercase tracking-wider">Tài khoản</h3>}
         {accountNavItems.map((item) => (
           <SidebarItem
             key={item.id}
@@ -174,8 +182,8 @@ const Sidebar: React.FC = () => {
                 className="w-8 h-8 rounded-full border-2 border-slate-600 group-hover:border-sky-500 transition-colors flex-shrink-0"
               />
               <div className="ml-2.5 flex-grow overflow-hidden">
-                <p className="text-sm font-semibold text-slate-100 truncate">Student User</p>
-                <p className="text-xs text-slate-400 truncate">student.user@example.com</p>
+                <p className="text-sm font-semibold text-slate-100 truncate">Học sinh</p>
+                <p className="text-xs text-slate-400 truncate">student@example.com</p>
               </div>
               <ArrowRightOnRectangleIcon className="w-5 h-5 text-slate-400 group-hover:text-red-400 transition-colors ml-2 flex-shrink-0" />
             </button>
@@ -193,7 +201,7 @@ const Sidebar: React.FC = () => {
                 />
               </button>
               <div className="absolute left-full ml-3 px-3 py-2 text-sm font-medium text-white bg-slate-800/95 backdrop-blur-sm rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none transform translate-x-[-8px] group-hover:translate-x-0 z-50" role="tooltip">
-                Student User
+                Học sinh
                 <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-800/95 transform rotate-45"></div>
               </div>
             </div>

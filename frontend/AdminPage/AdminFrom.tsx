@@ -7,6 +7,7 @@ import ManageCourse from './manage-course/ManageCourse';
 import ManagePart from './manage-part/ManagePart';
 import ManageQuestion from './manage-question/ManageQuestion';
 import ManageUser from './manage-user/ManageUser';
+import ManageTest from './manage-test/ManageTest';
 
 const AdminForm: React.FC = () => {
   const [activeSection, setActiveSection] = useState<string>('dashboard');
@@ -21,6 +22,8 @@ const AdminForm: React.FC = () => {
         return <ManageQuestion />;
       case 'manage-users':
         return <ManageUser />;
+      case 'manage-tests':
+        return <ManageTest />;
       case 'dashboard':
       default:
         return (
