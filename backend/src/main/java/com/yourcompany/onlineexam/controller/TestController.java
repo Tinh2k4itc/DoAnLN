@@ -139,7 +139,7 @@ public class TestController {
     @GetMapping("/available")
     public ResponseEntity<List<Test>> getAvailableTests() {
         try {
-            logger.info("Fetching available tests for students");
+            logger.info("Fetching available tests for users");
             List<Test> tests = testService.getAvailableTests();
             logger.info("Found {} available tests", tests.size());
             return ResponseEntity.ok(tests);
@@ -162,10 +162,10 @@ public class TestController {
         }
     }
 
-    @GetMapping("/{id}/student")
-    public ResponseEntity<Test> getTestForStudent(@PathVariable String id) {
+    @GetMapping("/{id}/user")
+    public ResponseEntity<Test> getTestForUser(@PathVariable String id) {
         try {
-            logger.info("Fetching test for student with id: {}", id);
+            logger.info("Fetching test for user with id: {}", id);
             Test test = testService.getTestById(id);
             if (test != null && Boolean.TRUE.equals(test.getIsActive())) {
                 // Kiểm tra thời gian mở đề thi
@@ -178,14 +178,14 @@ public class TestController {
                     logger.warn("Test {} has ended (end date: {})", id, test.getEndDate());
                     return ResponseEntity.status(403).build(); // Đã hết thời gian
                 }
-                logger.info("Test {} is available for student", id);
+                logger.info("Test {} is available for user", id);
                 return ResponseEntity.ok(test);
             } else {
                 logger.warn("Test {} not found or not active", id);
                 return ResponseEntity.notFound().build();
             }
         } catch (Exception e) {
-            logger.error("Error fetching test for student with id: {}", id, e);
+            logger.error("Error fetching test for user with id: {}", id, e);
             return ResponseEntity.status(500).build();
         }
     }

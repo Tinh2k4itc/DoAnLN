@@ -47,6 +47,9 @@ public class UserService {
     }
 
     public User changeRole(String uid, String role) throws ExecutionException, InterruptedException {
+        if (!"admin".equals(role) && !"user".equals(role)) {
+            role = "user";
+        }
         Firestore db = FirestoreClient.getFirestore();
         DocumentReference ref = db.collection(COLLECTION_NAME).document(uid);
         ref.update("role", role);

@@ -7,7 +7,7 @@ export interface User {
   firstName?: string;
   lastName?: string;
   imageUrl?: string;
-  role: string;
+  role: 'admin' | 'user';
   isDeleted?: boolean;
 }
 
