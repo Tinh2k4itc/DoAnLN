@@ -157,7 +157,7 @@ export const fetchAvailableTests = async (): Promise<Test[]> => {
 export const fetchTestForStudent = async (id: string): Promise<Test> => {
   try {
     console.log('Fetching test for student:', id);
-    const res = await axios.get<Test>(`${API_URL}/${id}/student`);
+    const res = await axios.get<Test>(`${API_URL}/${id}/user`);
     console.log('Test for student fetched successfully');
     return res.data;
   } catch (error) {
