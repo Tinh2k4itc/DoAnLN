@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { fetchQuestionBanks, createQuestionBank, deleteQuestionBank, QuestionBank } from './QuestionBankApi';
 import { fetchCourses, Course } from '../manage-course/courseApi';
+import { fetchParts, Part } from '../manage-part/PartApi';
 import QuestionForm from './QuestionForm';
 import ImportQuestionExcel from './ImportQuestionExcel';
 import QuestionList from './QuestionList';
+import { fetchQuestions } from './QuestionApi';
 
 const emptyBank: Omit<QuestionBank, 'id'|'totalQuestions'|'easyCount'|'mediumCount'|'hardCount'> = {
   name: '',
@@ -15,6 +17,7 @@ const emptyBank: Omit<QuestionBank, 'id'|'totalQuestions'|'easyCount'|'mediumCou
 const ManageQuestion: React.FC = () => {
   const [banks, setBanks] = useState<QuestionBank[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
+  const [parts, setParts] = useState<Part[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [formData, setFormData] = useState(emptyBank);
@@ -42,6 +45,7 @@ const ManageQuestion: React.FC = () => {
 
   useEffect(() => {
     loadData();
+    fetchParts().then(setParts);
     // eslint-disable-next-line
   }, [search, searchCourse]);
 
@@ -85,29 +89,48 @@ const ManageQuestion: React.FC = () => {
 
   const handleDelete = async (id?: string) => {
     if (!id) return;
-    if (!window.confirm('Bạn có chắc muốn xóa ngân hàng đề này?')) return;
+    // Lấy danh sách câu hỏi liên quan
+    const questions = await fetchQuestions(id);
+    const questionNames = questions.map(q => q.content).join(', ');
+    let confirmMsg = `Xóa ngân hàng đề này sẽ xóa toàn bộ câu hỏi liên quan (không xóa đề thi).\n`;
+    if (questions.length > 0) {
+      confirmMsg += `Các câu hỏi liên quan: ${questionNames}\n`;
+    }
+    confirmMsg += 'Bạn có chắc chắn không?';
+    if (!window.confirm(confirmMsg)) return;
     try {
       await deleteQuestionBank(id);
       await loadData();
-    } catch {
-      alert('Lỗi khi xóa ngân hàng đề!');
+    } catch (err: any) {
+      alert('Lỗi khi xóa ngân hàng đề: ' + (err?.message || err));
     }
   };
+
+  // Thống kê số lượng đề thi sử dụng mỗi ngân hàng đề
+  const statsByBank = banks.map(bank => ({
+    bank,
+    partCount: parts.filter(p => p.questionBankId === bank.id).length,
+  }));
 
   return (
     <div className="relative min-h-screen bg-slate-50 p-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
         <h1 className="text-3xl font-bold">Quản lý ngân hàng đề</h1>
         <div className="flex gap-2 items-center w-full sm:w-auto">
-          <input
-            type="text"
-            placeholder="Tìm kiếm theo tên ngân hàng đề..."
-            className="px-3 py-2 border rounded w-full sm:w-64"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
+          <div className="relative w-full sm:w-64">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z" /></svg>
+            </span>
+            <input
+              type="text"
+              placeholder="Tìm kiếm theo tên ngân hàng đề..."
+              className="pl-10 pr-3 py-2 border rounded-2xl w-full focus:ring-2 focus:ring-sky-300 transition"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+          </div>
           <select
-            className="px-3 py-2 border rounded w-full sm:w-64"
+            className="px-3 py-2 border rounded-2xl w-full sm:w-64"
             value={searchCourse}
             onChange={e => setSearchCourse(e.target.value)}
           >
@@ -117,7 +140,7 @@ const ManageQuestion: React.FC = () => {
             ))}
           </select>
           <button
-            className="px-4 py-2 bg-sky-600 text-white rounded-md shadow hover:bg-sky-700 focus:outline-none"
+            className="px-4 py-2 bg-sky-600 text-white rounded-lg shadow hover:bg-sky-700 focus:outline-none text-base font-semibold"
             onClick={handleOpenCreate}
           >
             + Tạo ngân hàng đề
@@ -127,25 +150,45 @@ const ManageQuestion: React.FC = () => {
       {loading ? (
         <div className="text-center text-slate-500">Đang tải...</div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {banks.map(bank => (
-            <div key={bank.id} className="bg-white rounded-lg shadow p-5 flex flex-col justify-between">
-              <div>
-                <h2 className="text-xl font-semibold mb-2">{bank.name}</h2>
-                <div className="text-slate-600 text-sm mb-1">Môn học: <span className="font-mono">{bank.courseName}</span></div>
-                <div className="text-slate-600 text-sm mb-1">Mã môn học: {bank.courseId}</div>
-                <div className="text-slate-600 text-sm mb-1">Tổng số câu hỏi: {bank.totalQuestions ?? 0}</div>
-                <div className="text-slate-600 text-sm mb-1">Dễ: {bank.easyCount ?? 0} | Trung bình: {bank.mediumCount ?? 0} | Khó: {bank.hardCount ?? 0}</div>
-                <div className="text-slate-500 text-xs mt-2">{bank.description}</div>
-              </div>
-              <div className="flex gap-2 mt-4">
-                <button className="flex-1 px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600" onClick={() => setShowQuestionForm({ open: true, bankId: bank.id! })}>Thêm câu hỏi</button>
-                <button className="flex-1 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600" onClick={() => setShowImportExcel({ open: true, bankId: bank.id! })}>Import Excel</button>
-                <button className="flex-1 px-3 py-1 bg-sky-500 text-white rounded hover:bg-sky-600" onClick={() => setShowQuestionList({ open: true, bankId: bank.id! })}>Xem câu hỏi</button>
-                <button className="flex-1 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600" onClick={() => handleDelete(bank.id)}>Xóa</button>
-              </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 mt-8">
+          {banks.length === 0 ? (
+            <div className="col-span-full flex flex-col items-center text-gray-400 mt-16">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2a4 4 0 018 0v2m-4-4v4m0 0v4m0-4h4m-4 0H7" /></svg>
+              <span className="text-lg">Chưa có ngân hàng đề nào</span>
             </div>
-          ))}
+          ) : (
+            banks.map(bank => (
+              <div key={bank.id} className="bg-white rounded-2xl shadow-lg p-6 flex flex-col min-h-[220px] transition-transform hover:scale-105 hover:shadow-2xl border border-slate-100 relative">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="bg-green-100 text-green-600 rounded-full p-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zm0 0V4m0 7v7" /></svg>
+                  </div>
+                  <div>
+                    <h2 className="font-bold text-xl mb-1">{bank.name}</h2>
+                    <div className="text-gray-600 text-sm">Môn học: <span className="font-semibold">{bank.courseName}</span></div>
+                    <div className="text-gray-600 text-sm">Mã môn học: <span className="font-semibold">{bank.courseId}</span></div>
+                    <div className="text-gray-600 text-sm">Tổng số câu hỏi: <span className="font-semibold">{bank.totalQuestions ?? 0}</span></div>
+                    <div className="text-gray-600 text-sm">Dễ: <span className="font-semibold">{bank.easyCount ?? 0}</span> | Trung bình: <span className="font-semibold">{bank.mediumCount ?? 0}</span> | Khó: <span className="font-semibold">{bank.hardCount ?? 0}</span></div>
+                    <div className="text-slate-500 text-xs mt-2">{bank.description}</div>
+                  </div>
+                </div>
+                <div className="flex gap-3 mt-auto pt-4 flex-wrap justify-center">
+                  <button className="flex-1 min-w-[120px] flex items-center justify-center px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg shadow transition text-base font-semibold" title="Thêm câu hỏi" onClick={() => setShowQuestionForm({ open: true, bankId: bank.id! })}>
+                    Thêm câu hỏi
+                  </button>
+                  <button className="flex-1 min-w-[120px] flex items-center justify-center px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow transition text-base font-semibold" title="Import Excel" onClick={() => setShowImportExcel({ open: true, bankId: bank.id! })}>
+                    Import Excel
+                  </button>
+                  <button className="flex-1 min-w-[120px] flex items-center justify-center px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg shadow transition text-base font-semibold" title="Xem câu hỏi" onClick={() => setShowQuestionList({ open: true, bankId: bank.id! })}>
+                    Xem câu hỏi
+                  </button>
+                  <button className="flex-1 min-w-[120px] flex items-center justify-center px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow transition text-base font-semibold" title="Xóa ngân hàng đề" onClick={() => handleDelete(bank.id)}>
+                    Xóa
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       )}
 
@@ -207,6 +250,16 @@ const ManageQuestion: React.FC = () => {
           }}
         />
       )}
+
+      <div className="p-6">
+        <div className="mb-4 flex flex-wrap gap-4">
+          {statsByBank.map(stat => (
+            <div key={stat.bank.id} className="bg-slate-100 rounded px-4 py-2 text-sm">
+              <span className="font-semibold">{stat.bank.name}:</span> {stat.bank.totalQuestions || 0} câu hỏi, {stat.partCount} đề thi sử dụng
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };

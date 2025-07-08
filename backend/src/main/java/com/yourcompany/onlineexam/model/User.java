@@ -20,7 +20,7 @@ public class User {
     private String firstName;
     private String lastName;
     private String imageUrl;
-    private String role; // "user", "admin", "lecturer", "student"
+    private String role; // "user", "admin"
     private String intakeId;
     private Date createdAt;
     private Date lastLoginAt;

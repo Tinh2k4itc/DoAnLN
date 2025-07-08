@@ -114,8 +114,6 @@ const ManageUser: React.FC = () => {
                   <select value={user.role} onChange={e => handleChangeRole(user.uid, e.target.value)} className="border rounded px-2 py-1">
                     <option value="user">User</option>
                     <option value="admin">Admin</option>
-                    <option value="lecturer">Lecturer</option>
-                    <option value="student">Student</option>
                   </select>
                 </td>
                 <td>
@@ -145,8 +143,6 @@ const ManageUser: React.FC = () => {
               <select className="w-full border rounded px-3 py-2" value={formData.role} onChange={e => setFormData(f => ({ ...f, role: e.target.value }))}>
                 <option value="user">User</option>
                 <option value="admin">Admin</option>
-                <option value="lecturer">Lecturer</option>
-                <option value="student">Student</option>
               </select>
               <div className="flex justify-end gap-2">
                 <button type="button" className="px-4 py-2 bg-slate-200 rounded" onClick={() => setShowForm(false)}>Hủy</button>

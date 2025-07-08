@@ -45,10 +45,12 @@ public class PartService {
         }
         part.setCreatedAt(new Date());
         part.setUpdatedAt(new Date());
+        // Đảm bảo trường questions và score được lưu
         Firestore db = FirestoreClient.getFirestore();
         ApiFuture<DocumentReference> future = db.collection(COLLECTION_NAME).add(part);
         String id = future.get().getId();
         part.setId(id);
+        db.collection(COLLECTION_NAME).document(id).set(part);
         return part;
     }
 
@@ -58,6 +60,7 @@ public class PartService {
             throw new IllegalArgumentException("Tên bài thi đã tồn tại trong môn học này!");
         }
         part.setUpdatedAt(new Date());
+        // Đảm bảo trường questions và score được lưu
         Firestore db = FirestoreClient.getFirestore();
         DocumentReference docRef = db.collection(COLLECTION_NAME).document(id);
         docRef.set(part);

@@ -8,7 +8,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 
 // Hook kiểm tra user đăng nhập & role
-function useAuthRole() {
+export function useAuthRole() {
   const [state, setState] = React.useState<{ loading: boolean; user: any; role: string | null }>({
     loading: true,
     user: null,

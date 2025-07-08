@@ -29,15 +29,15 @@ import {
 } from './icons'; // Adjusted path
 
 const mainNavItems: SidebarItemInfo[] = [
-  { id: 'my-courses', label: 'My Courses', icon: AcademicCapIcon },
-  { id: 'my-assignments', label: 'My Assignments', icon: DocumentTextIcon },
-  { id: 'my-grades', label: 'My Grades', icon: ChartBarIcon },
+  { id: 'my-courses', label: 'Khóa học của tôi', icon: AcademicCapIcon },
+  { id: 'my-assignments', label: 'Bài tập của tôi', icon: DocumentTextIcon },
+  { id: 'my-grades', label: 'Điểm số của tôi', icon: ChartBarIcon },
 ];
 
 const accountNavItems: SidebarItemInfo[] = [
-  { id: 'profile', label: 'Profile', icon: UserCircleIcon },
-  { id: 'settings', label: 'Settings', icon: Cog6ToothIcon },
-  { id: 'notifications', label: 'Notifications', icon: BellIcon },
+  { id: 'profile', label: 'Hồ sơ', icon: UserCircleIcon },
+  { id: 'settings', label: 'Cài đặt', icon: Cog6ToothIcon },
+  { id: 'notifications', label: 'Thông báo', icon: BellIcon },
 ];
 
 const Sidebar: React.FC = () => {
@@ -48,7 +48,7 @@ const Sidebar: React.FC = () => {
   const handleItemClick = useCallback((id: string) => {
     setActiveItemId(id);
     // In a real app, this would trigger navigation or content update in UserForm.tsx
-    console.log(`Student sidebar item clicked: ${id}`);
+    console.log(`User sidebar item clicked: ${id}`);
   }, []);
 
   const toggleExpand = useCallback(() => {
@@ -71,12 +71,12 @@ const Sidebar: React.FC = () => {
           className={`flex items-center ${!isExpanded ? 'cursor-pointer relative group' : ''}`}
           onClick={!isExpanded ? toggleExpand : undefined}
           role={!isExpanded ? "button" : undefined}
-          aria-label={!isExpanded ? "Expand Sidebar" : "Student Portal Logo"}
+          aria-label={!isExpanded ? "Expand Sidebar" : "User Portal Logo"}
           tabIndex={!isExpanded ? 0 : undefined}
           onKeyDown={!isExpanded ? (e) => (e.key === 'Enter' || e.key === ' ') && toggleExpand() : undefined}
         >
           <CubeTransparentIcon className={`text-sky-400 flex-shrink-0 ${isExpanded ? 'w-7 h-7' : 'w-7 h-7 md:w-8 md:h-8'}`} />
-          {isExpanded && <span className="ml-3 text-xl font-bold text-slate-100">Student Portal</span>}
+          {isExpanded && <span className="ml-3 text-xl font-bold text-slate-100">User Portal</span>}
           {!isExpanded && (
             <>
               <ChevronRightIcon className="w-4 h-4 md:w-5 md:h-5 absolute right-[-10px] md:right-[-12px] top-1/2 transform -translate-y-1/2 text-slate-500 group-hover:text-sky-400 transition-colors duration-150" />
@@ -94,7 +94,7 @@ const Sidebar: React.FC = () => {
         {isExpanded && (
           <button
             onClick={toggleExpand}
-            aria-label="Collapse Sidebar"
+            aria-label="Thu gọn thanh bên"
             className="p-1.5 rounded-full text-slate-400 hover:bg-slate-700/70 hover:text-sky-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 focus-visible:ring-sky-500"
           >
             <ChevronLeftIcon className="w-5 h-5" />
@@ -109,8 +109,8 @@ const Sidebar: React.FC = () => {
           <input
             ref={searchInputRef}
             type="search"
-            placeholder="Search..."
-            aria-label="Search"
+            placeholder="Tìm kiếm..."
+            aria-label="Tìm kiếm"
             className="w-full bg-slate-800 border border-slate-700/60 text-slate-200 placeholder-slate-500 rounded-lg py-2 pl-10 pr-3 focus:ring-1 focus:ring-sky-500 focus:border-sky-500 focus:outline-none text-sm"
           />
         </div>
@@ -121,7 +121,7 @@ const Sidebar: React.FC = () => {
               setIsExpanded(true);
               setFocusSearchOnExpand(true);
             }}
-            aria-label="Open search"
+            aria-label="Mở tìm kiếm"
             className="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-700 hover:text-sky-400 focus-visible:bg-slate-700 focus-visible:text-sky-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-opacity-75"
           >
             <MagnifyingGlassIcon className="w-5 h-5 md:w-6 md:h-6" />
@@ -149,7 +149,7 @@ const Sidebar: React.FC = () => {
 
       {/* Account Navigation Items & Profile */}
       <div className={`mt-auto pt-3 border-t w-full ${isExpanded ? 'border-slate-700/60' : 'border-slate-700 flex flex-col items-center'}`}>
-        {isExpanded && <h3 className="px-3 pt-1 pb-1 text-xs font-semibold text-slate-500 uppercase tracking-wider">Account</h3>}
+        {isExpanded && <h3 className="px-3 pt-1 pb-1 text-xs font-semibold text-slate-500 uppercase tracking-wider">Tài khoản</h3>}
         {accountNavItems.map((item) => (
           <SidebarItem
             key={item.id}
@@ -169,13 +169,13 @@ const Sidebar: React.FC = () => {
               onClick={() => console.log('Logout or profile action')}
             >
               <img
-                src="https://picsum.photos/seed/student99/40/40" // Different seed for student
-                alt="Student profile picture" 
+                src="https://picsum.photos/seed/user99/40/40" // Different seed for user
+                alt="User profile picture" 
                 className="w-8 h-8 rounded-full border-2 border-slate-600 group-hover:border-sky-500 transition-colors flex-shrink-0"
               />
               <div className="ml-2.5 flex-grow overflow-hidden">
-                <p className="text-sm font-semibold text-slate-100 truncate">Student User</p>
-                <p className="text-xs text-slate-400 truncate">student.user@example.com</p>
+                <p className="text-sm font-semibold text-slate-100 truncate">User</p>
+                <p className="text-xs text-slate-400 truncate">user@example.com</p>
               </div>
               <ArrowRightOnRectangleIcon className="w-5 h-5 text-slate-400 group-hover:text-red-400 transition-colors ml-2 flex-shrink-0" />
             </button>
@@ -187,13 +187,13 @@ const Sidebar: React.FC = () => {
                 onClick={() => console.log('Profile action collapsed')}
               >
                 <img
-                  src="https://picsum.photos/seed/student99/40/40"
-                  alt="Student User Profile"
+                  src="https://picsum.photos/seed/user99/40/40"
+                  alt="User Profile"
                   className="w-8 h-8 md:w-9 md:h-9 rounded-full border-2 border-slate-600 group-hover:border-sky-500 transition-colors"
                 />
               </button>
               <div className="absolute left-full ml-3 px-3 py-2 text-sm font-medium text-white bg-slate-800/95 backdrop-blur-sm rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none transform translate-x-[-8px] group-hover:translate-x-0 z-50" role="tooltip">
-                Student User
+                User
                 <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-800/95 transform rotate-45"></div>
               </div>
             </div>

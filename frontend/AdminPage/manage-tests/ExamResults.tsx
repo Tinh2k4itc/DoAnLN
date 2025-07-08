@@ -1,0 +1,230 @@
+import React, { useEffect, useState } from 'react';
+import { fetchExamResults, ExamResult } from './ExamResultApi';
+import { saveAs } from 'file-saver';
+import { Bar } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,  
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+
+const ExamResults: React.FC = () => {
+  const [results, setResults] = useState<ExamResult[]>([]);
+  const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [showDetail, setShowDetail] = useState<ExamResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchExamResults()
+      .then(setResults)
+      .catch((e: any) => {
+        setError('Không thể tải dữ liệu kết quả thi. Vui lòng kiểm tra kết nối backend hoặc thử lại.');
+        console.error('Lỗi fetchExamResults:', e);
+      });
+  }, []);
+
+  let filtered = results;
+  if (search.trim()) {
+    const keyword = search.trim().toLowerCase();
+    filtered = filtered.filter(r =>
+      r.userName.toLowerCase().includes(keyword) ||
+      r.testName.toLowerCase().includes(keyword)
+    );
+  }
+  if (filterStatus) {
+    filtered = filtered.filter(r => r.status === filterStatus);
+  }
+
+  const avgScore = filtered.length ? (filtered.reduce((sum, r) => sum + r.score, 0) / filtered.length).toFixed(2) : 0;
+  const passCount = filtered.filter(r => r.score >= 5).length;
+  const failCount = filtered.length - passCount;
+
+  const exportCSV = () => {
+    const header = 'Học sinh,Đề thi,Điểm,Thời gian nộp,Trạng thái\n';
+    const rows = filtered.map(r =>
+      [r.userName, r.testName, r.score, r.submittedAt, r.status === 'submitted' ? 'Đã nộp' : 'Chưa nộp'].join(',')
+    ).join('\n');
+    const csv = header + rows;
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    saveAs(blob, 'exam_results.csv');
+  };
+
+  const testNames = Array.from(new Set(results.map(r => r.testName)));
+  const chartData = {
+    labels: testNames,
+    datasets: [
+      {
+        label: 'Đạt',
+        backgroundColor: 'rgba(34,197,94,0.7)',
+        data: testNames.map(name => results.filter(r => r.testName === name && r.score >= 5).length),
+      },
+      {
+        label: 'Không đạt',
+        backgroundColor: 'rgba(239,68,68,0.7)',
+        data: testNames.map(name => results.filter(r => r.testName === name && r.score < 5).length),
+      },
+    ],
+  };
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' as const },
+      title: { display: true, text: 'Thống kê kết quả theo đề thi' },
+    },
+  };
+
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">Quản lý kết quả thi</h1>
+      {error && <div className="mb-4 text-red-600 font-semibold">{error}</div>}
+      {!error && filtered.length === 0 && <div className="mb-4 text-slate-500">Không có dữ liệu kết quả thi.</div>}
+      <div className="flex flex-wrap gap-4 mb-4 items-center">
+        <div className="relative w-full sm:w-64">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z" /></svg>
+          </span>
+          <input type="text" className="pl-10 pr-3 py-2 border rounded-2xl w-full focus:ring-2 focus:ring-sky-300 transition" placeholder="Tìm kiếm học sinh, đề thi..." value={search} onChange={e => setSearch(e.target.value)} />
+        </div>
+        <select className="px-3 py-2 border rounded-2xl w-full sm:w-64" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+          <option value="">-- Tất cả trạng thái --</option>
+          <option value="submitted">Đã nộp</option>
+          <option value="not_submitted">Chưa nộp</option>
+        </select>
+        <button className="px-4 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 focus:outline-none text-base font-semibold" onClick={exportCSV}>Xuất file CSV</button>
+      </div>
+      <div className="mb-4 flex flex-wrap gap-6">
+        <div className="flex items-center gap-2 bg-sky-100 rounded-xl px-4 py-2 min-w-[180px]">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zm0 0V4m0 7v7" /></svg>
+          <span>Điểm trung bình: <span className="font-bold">{avgScore}</span></span>
+        </div>
+        <div className="flex items-center gap-2 bg-green-100 rounded-xl px-4 py-2 min-w-[120px]">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+          <span>Đạt: <span className="font-bold">{passCount}</span></span>
+        </div>
+        <div className="flex items-center gap-2 bg-red-100 rounded-xl px-4 py-2 min-w-[120px]">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          <span>Không đạt: <span className="font-bold">{failCount}</span></span>
+        </div>
+      </div>
+      <div className="mb-8">
+        {/* <Bar data={chartData} options={chartOptions} /> */}
+        <div style={{height: 300, background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontWeight: 'bold', fontSize: 18}}>
+          Biểu đồ sẽ hiển thị ở đây
+        </div>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full border text-sm mb-6 rounded-xl shadow">
+          <thead>
+            <tr className="bg-slate-100">
+              <th>Học sinh</th>
+              <th>Đề thi</th>
+              <th className="text-center">Điểm</th>
+              <th>Thời gian nộp</th>
+              <th className="text-center">Trạng thái</th>
+              <th className="text-center">Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map(r => (
+              <tr key={r.id} className="hover:bg-slate-50 transition">
+                <td>{r.userName}</td>
+                <td>{r.testName}</td>
+                <td className="text-center font-bold">{r.score}</td>
+                <td>{r.submittedAt ? new Date(r.submittedAt).toLocaleString() : '-'}</td>
+                <td className="text-center">
+                  {r.status === 'submitted' ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                      Đã nộp
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01" /></svg>
+                      Chưa nộp
+                    </span>
+                  )}
+                </td>
+                <td className="text-center">
+                  <button className="px-3 py-1 bg-sky-600 text-white rounded-full flex items-center gap-1 hover:bg-sky-700 transition font-semibold" onClick={() => setShowDetail(r)}>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm-6 0a6 6 0 1112 0 6 6 0 01-12 0z" /></svg>
+                    Chi tiết
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {showDetail && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-xl relative">
+            <button className="absolute top-2 right-2 text-slate-400 hover:text-slate-700 text-2xl font-bold" onClick={() => setShowDetail(null)}>&times;</button>
+            <h2 className="text-2xl font-bold mb-4">Chi tiết bài làm: <span className="text-sky-700">{showDetail.userName}</span> - <span className="text-sky-700">{showDetail.testName}</span></h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              <div className="bg-sky-50 rounded-lg p-4">
+                <div className="font-semibold">Điểm:</div>
+                <div className="text-2xl font-bold text-sky-700">{showDetail.score}</div>
+              </div>
+              <div className="bg-slate-50 rounded-lg p-4">
+                <div className="font-semibold">Thời gian nộp:</div>
+                <div>{showDetail.submittedAt ? new Date(showDetail.submittedAt).toLocaleString() : '-'}</div>
+              </div>
+              <div className="bg-slate-50 rounded-lg p-4">
+                <div className="font-semibold">Trạng thái:</div>
+                <div>
+                  {showDetail.status === 'submitted' ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                      Đã nộp
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01" /></svg>
+                      Chưa nộp
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="bg-orange-50 rounded-lg p-4">
+                <div className="font-semibold">Số lần thoát khỏi màn hình thi:</div>
+                <div className={typeof showDetail.tabSwitchCount === 'number' && showDetail.tabSwitchCount > 0 ? 'text-orange-600 font-bold' : 'font-bold'}>
+                  {typeof showDetail.tabSwitchCount === 'number' ? showDetail.tabSwitchCount : 0}
+                </div>
+              </div>
+            </div>
+            <div className="font-semibold mt-4 mb-2">Chi tiết từng câu hỏi:</div>
+            <ol className="list-decimal ml-6">
+              {showDetail.details?.map((d: any, idx: number) => (
+                <li key={idx} className="mb-2">
+                  <div className="font-semibold">
+                    {typeof d.question === 'string'
+                      ? d.question
+                      : JSON.stringify(d.question)}
+                  </div>
+                  <div>
+                    Trả lời: {d.answer}{' '}
+                    {d.correct ? (
+                      <span className="text-green-600">(Đúng)</span>
+                    ) : (
+                      <span className="text-red-600">(Sai)</span>
+                    )}
+                  </div>
+                  <div>Điểm: {d.point}</div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ExamResults;

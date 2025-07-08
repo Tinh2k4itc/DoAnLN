@@ -6,8 +6,19 @@ export interface Part {
   description: string;
   duration: number;
   courseId: string;
+  questionBankId?: string;
   createdAt?: string;
   updatedAt?: string;
+  questions?: any[];
+  score?: number;
+  maxRetake?: number;
+  randomizeQuestions?: boolean;
+  enableAntiCheat?: boolean;
+  enableTabWarning?: boolean;
+  openTime?: string | null;
+  closeTime?: string | null;
+  showAnswerAfterSubmit?: boolean;
+  courseName?: string;
 }
 
 const API_URL = 'http://localhost:8080/api/parts';

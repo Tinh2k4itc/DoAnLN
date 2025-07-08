@@ -13,6 +13,7 @@ export interface Question {
   type: 'truefalse' | 'single' | 'multiple';
   level: 'easy' | 'medium' | 'hard';
   options: QuestionOption[];
+  answer?: string;
 }
 
 const API_URL = 'http://localhost:8080/api/question-banks';

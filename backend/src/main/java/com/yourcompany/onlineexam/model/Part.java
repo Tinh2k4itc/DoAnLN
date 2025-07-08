@@ -1,6 +1,8 @@
 package com.yourcompany.onlineexam.model;
 
 import java.util.Date;
+import java.util.List;
+import com.yourcompany.onlineexam.model.Question;
 
 public class Part {
     private String id;
@@ -10,6 +12,13 @@ public class Part {
     private String courseId;
     private Date createdAt;
     private Date updatedAt;
+    private List<QuestionInTest> questions;
+    private Integer score;
+    private Integer maxRetake;
+    private Boolean randomizeQuestions;
+    private Boolean enableAntiCheat;
+    private Boolean enableTabWarning;
+    private Boolean showAnswerAfterSubmit;
 
     public Part() {}
 
@@ -33,4 +42,48 @@ public class Part {
 
     public Date getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Date updatedAt) { this.updatedAt = updatedAt; }
+
+    public List<QuestionInTest> getQuestions() { return questions; }
+    public void setQuestions(List<QuestionInTest> questions) { this.questions = questions; }
+
+    public Integer getScore() { return score; }
+    public void setScore(Integer score) { this.score = score; }
+
+    public Integer getMaxRetake() { return maxRetake; }
+    public void setMaxRetake(Integer maxRetake) { this.maxRetake = maxRetake; }
+
+    public Boolean getRandomizeQuestions() { return randomizeQuestions; }
+    public void setRandomizeQuestions(Boolean randomizeQuestions) { this.randomizeQuestions = randomizeQuestions; }
+
+    public Boolean getEnableAntiCheat() { return enableAntiCheat; }
+    public void setEnableAntiCheat(Boolean enableAntiCheat) { this.enableAntiCheat = enableAntiCheat; }
+
+    public Boolean getEnableTabWarning() { return enableTabWarning; }
+    public void setEnableTabWarning(Boolean enableTabWarning) { this.enableTabWarning = enableTabWarning; }
+
+    public Boolean getShowAnswerAfterSubmit() { return showAnswerAfterSubmit; }
+    public void setShowAnswerAfterSubmit(Boolean showAnswerAfterSubmit) { this.showAnswerAfterSubmit = showAnswerAfterSubmit; }
+
+    public static class QuestionInTest {
+        private String id;
+        private String content;
+        private String level;
+        private Integer score;
+        private List<Question.Option> options;
+        private String answer;
+
+        public QuestionInTest() {}
+        public String getId() { return id; }
+        public void setId(String id) { this.id = id; }
+        public String getContent() { return content; }
+        public void setContent(String content) { this.content = content; }
+        public String getLevel() { return level; }
+        public void setLevel(String level) { this.level = level; }
+        public Integer getScore() { return score; }
+        public void setScore(Integer score) { this.score = score; }
+        public List<Question.Option> getOptions() { return options; }
+        public void setOptions(List<Question.Option> options) { this.options = options; }
+        public String getAnswer() { return answer; }
+        public void setAnswer(String answer) { this.answer = answer; }
+    }
 } 

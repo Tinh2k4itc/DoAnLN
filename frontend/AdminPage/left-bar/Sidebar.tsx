@@ -36,18 +36,18 @@ interface SidebarProps {
 }
 
 const mainNavItems: SidebarItemInfo[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: Squares2X2Icon },
-  { id: 'manage-courses', label: 'Manage Courses', icon: BookOpenIcon },
-  { id: 'manage-parts', label: 'Manage Parts', icon: PuzzlePieceIcon },
-  { id: 'manage-questions', label: 'Manage Questions', icon: QuestionMarkCircleIcon },
-  { id: 'manage-tests', label: 'Manage Tests', icon: ClipboardDocumentListIcon },
-  { id: 'manage-users', label: 'Manage Users', icon: UsersIcon },
+  { id: 'dashboard', label: 'Bảng điều khiển', icon: Squares2X2Icon },
+  { id: 'manage-courses', label: 'Quản lý môn học', icon: BookOpenIcon },
+  { id: 'manage-question-banks', label: 'Ngân hàng câu hỏi', icon: QuestionMarkCircleIcon },
+  { id: 'manage-users', label: 'Quản lý người dùng', icon: UsersIcon },
+  { id: 'exam-results', label: 'Kết quả thi', icon: ClipboardDocumentListIcon },
+  { id: 'system-settings', label: 'Cài đặt hệ thống', icon: Cog6ToothIcon },
 ];
 
 const accountNavItems: SidebarItemInfo[] = [
-  { id: 'admin-profile', label: 'Admin Profile', icon: UserCircleIcon },
-  { id: 'settings', label: 'Settings', icon: Cog6ToothIcon },
-  { id: 'notifications', label: 'Notifications', icon: BellIcon },
+  { id: 'admin-profile', label: 'Hồ sơ quản trị', icon: UserCircleIcon },
+  { id: 'settings', label: 'Cài đặt', icon: Cog6ToothIcon },
+  { id: 'notifications', label: 'Thông báo', icon: BellIcon },
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({ activeItemId, onItemClick }) => {
@@ -110,7 +110,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItemId, onItemClick }) => {
         {isExpanded && (
           <button
             onClick={toggleExpand}
-            aria-label="Collapse Sidebar"
+            aria-label="Thu gọn thanh bên"
             className="p-1.5 rounded-full text-slate-400 hover:bg-slate-700/70 hover:text-sky-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 focus-visible:ring-sky-500"
           >
             <ChevronLeftIcon className="w-5 h-5" />
@@ -125,8 +125,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItemId, onItemClick }) => {
           <input
             ref={searchInputRef}
             type="search"
-            placeholder="Search for anything..."
-            aria-label="Search"
+            placeholder="Tìm kiếm..."
+            aria-label="Tìm kiếm"
             className="w-full bg-slate-800 border border-slate-700/60 text-slate-200 placeholder-slate-500 rounded-lg py-2 pl-10 pr-3 focus:ring-1 focus:ring-sky-500 focus:border-sky-500 focus:outline-none text-sm"
           />
         </form>
@@ -137,7 +137,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItemId, onItemClick }) => {
               setIsExpanded(true);
               setFocusSearchOnExpand(true);
             }}
-            aria-label="Open search"
+            aria-label="Mở tìm kiếm"
             className="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-700 hover:text-sky-400 focus-visible:bg-slate-700 focus-visible:text-sky-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-opacity-75"
           >
             <MagnifyingGlassIcon className="w-5 h-5 md:w-6 md:h-6" />
@@ -151,7 +151,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItemId, onItemClick }) => {
 
       {/* Main Navigation Items */}
       <nav className={`flex-grow space-y-0.5 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-800/50 ${isExpanded ? 'pr-0 -mr-0.5' : 'pr-1 -mr-1'}`}>
-        {isExpanded && <h3 className="px-3 pt-2 pb-1 text-xs font-semibold text-slate-500 uppercase tracking-wider">Main</h3>}
+        {isExpanded && <h3 className="px-3 pt-2 pb-1 text-xs font-semibold text-slate-500 uppercase tracking-wider">Chính</h3>}
         {mainNavItems.map((item) => (
           <SidebarItem
             key={item.id}
@@ -165,7 +165,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItemId, onItemClick }) => {
 
       {/* Account Navigation Items & Profile */}
       <div className={`mt-auto pt-3 border-t w-full ${isExpanded ? 'border-slate-700/60' : 'border-slate-700 flex flex-col items-center'}`}>
-        {isExpanded && <h3 className="px-3 pt-1 pb-1 text-xs font-semibold text-slate-500 uppercase tracking-wider">Account</h3>}
+        {isExpanded && <h3 className="px-3 pt-1 pb-1 text-xs font-semibold text-slate-500 uppercase tracking-wider">Tài khoản</h3>}
         {accountNavItems.map((item) => (
           <SidebarItem
             key={item.id}
