@@ -17,7 +17,8 @@ const QuestionList: React.FC<Props> = ({ bankId, onClose }) => {
     try {
       const data = await fetchQuestions(bankId);
       setQuestions(data);
-    } catch {
+    } catch (err) {
+      console.error('Lỗi khi tải câu hỏi:', err);
       alert('Lỗi khi tải câu hỏi!');
     } finally {
       setLoading(false);
@@ -35,7 +36,8 @@ const QuestionList: React.FC<Props> = ({ bankId, onClose }) => {
     try {
       await deleteQuestion(bankId, id);
       await loadQuestions();
-    } catch {
+    } catch (err) {
+      console.error('Lỗi khi xóa câu hỏi:', err);
       alert('Lỗi khi xóa câu hỏi!');
     }
   };
@@ -72,8 +74,9 @@ const QuestionList: React.FC<Props> = ({ bankId, onClose }) => {
         )}
         {editingQuestion && (
           <QuestionForm
-            bankId={editingQuestion.bankId || editingQuestion.questionBankId || ''}
+            bankId={bankId}
             question={editingQuestion}
+            isCustomQuestion={false}
             onSuccess={async () => {
               setEditingQuestion(null);
               await loadQuestions();

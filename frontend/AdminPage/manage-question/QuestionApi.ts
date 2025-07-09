@@ -33,8 +33,8 @@ export const createQuestion = async (bankId: string, data: Omit<Question, 'id'|'
   return response.data;
 };
 
-export const updateQuestion = async (bankId: string, id: string, data: Partial<Question>): Promise<Question> => {
-  const response = await axios.put<Question>(`${API_URL}/${bankId}/questions/${id}`, data);
+export const updateQuestion = async (id: string, data: Partial<Question>): Promise<Question> => {
+  const response = await axios.put<Question>(`http://localhost:8080/api/questions/${id}`, data);
   return response.data;
 };
 
@@ -45,6 +45,6 @@ export const deleteQuestion = async (bankId: string, id: string): Promise<void> 
 };
 
 export const getQuestionById = async (bankId: string, id: string): Promise<Question> => {
-  const response = await axios.get<Question>(`${API_URL}/${bankId}/questions/${id}`);
+  const response = await axios.get<Question>(`http://localhost:8080/api/questions/${id}`);
   return response.data;
 }; 

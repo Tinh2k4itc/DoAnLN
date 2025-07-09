@@ -3,6 +3,7 @@ import { fetchCourses, createCourse, updateCourse, deleteCourse, Course } from '
 import { fetchParts, deletePart, Part } from '../manage-part/PartApi';
 import { fetchQuestionBanks, QuestionBank } from '../manage-question/QuestionBankApi';
 import ManagePart from '../manage-part/ManagePart';
+import { useNavigate } from 'react-router-dom';
 
 const emptyCourse: Omit<Course, 'id'> = {
   name: '',
@@ -24,13 +25,15 @@ const ManageCourse: React.FC = () => {
   const [parts, setParts] = useState<Part[]>([]);
   const [showDetail, setShowDetail] = useState<{open: boolean, course: Course|null}>({open: false, course: null});
   const [activeTab, setActiveTab] = useState<'info'|'parts'>('info');
+  const navigate = useNavigate();
 
   const loadCourses = async () => {
     setLoading(true);
     try {
       const data = await fetchCourses();
       setCourses(data);
-    } catch {
+    } catch (err) {
+      console.error('Lỗi khi tải danh sách môn học:', err);
       alert('Lỗi khi tải danh sách môn học!');
     } finally {
       setLoading(false);
@@ -106,7 +109,8 @@ const ManageCourse: React.FC = () => {
       await createCourse(formData);
       setShowCreate(false);
       await loadCourses();
-    } catch {
+    } catch (err) {
+      console.error('Lỗi khi tạo môn học:', err);
       alert('Lỗi khi tạo môn học!');
     }
   };
@@ -123,7 +127,8 @@ const ManageCourse: React.FC = () => {
       setShowEdit(false);
       setEditId(undefined);
       await loadCourses();
-    } catch {
+    } catch (err) {
+      console.error('Lỗi khi cập nhật môn học:', err);
       alert('Lỗi khi cập nhật môn học!');
     }
   };
@@ -176,7 +181,11 @@ const ManageCourse: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {filteredCourses.map(course => (
-            <div key={course.id} className="bg-white rounded-lg shadow p-5 flex flex-col justify-between">
+            <div
+              key={course.id}
+              className="bg-white rounded-lg shadow p-5 flex flex-col justify-between cursor-pointer transition-transform hover:scale-105 hover:shadow-2xl border border-slate-100"
+              onClick={() => navigate(`/admin/course/${course.id}`)}
+            >
               <div>
                 <h2 className="text-xl font-semibold mb-2">{course.name}</h2>
                 <div className="text-slate-600 text-sm mb-1">Mã: <span className="font-mono">{course.code}</span></div>
@@ -187,16 +196,12 @@ const ManageCourse: React.FC = () => {
               <div className="flex gap-2 mt-4">
                 <button
                   className="flex-1 px-3 py-1 bg-yellow-400 text-white rounded hover:bg-yellow-500"
-                  onClick={() => handleOpenEdit(course)}
+                  onClick={e => { e.stopPropagation(); handleOpenEdit(course); }}
                 >Chỉnh sửa</button>
                 <button
                   className="flex-1 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                  onClick={() => handleDelete(course.id)}
+                  onClick={e => { e.stopPropagation(); handleDelete(course.id); }}
                 >Xóa</button>
-                <button
-                  className="flex-1 px-3 py-1 bg-sky-600 text-white rounded hover:bg-sky-700"
-                  onClick={() => setShowDetail({open: true, course})}
-                >Chi tiết</button>
               </div>
             </div>
           ))}

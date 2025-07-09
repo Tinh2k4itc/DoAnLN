@@ -4,6 +4,7 @@ import { fetchQuestionBanks, QuestionBank } from '../manage-question/QuestionBan
 import { fetchQuestions, Question } from '../manage-question/QuestionApi';
 import { fetchCourses, Course } from '../manage-course/courseApi';
 import { useAuthRole } from '../../App';
+import QuestionForm from '../manage-question/QuestionForm';
 
 const emptyTest: Omit<Test, 'id'> = {
   name: '',
@@ -33,6 +34,7 @@ const ManageTests: React.FC = () => {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const { role } = useAuthRole ? useAuthRole() : { role: 'admin' };
+  const [showAddManual, setShowAddManual] = useState<{open: boolean, testId?: string}>({open: false});
 
   useEffect(() => {
     loadData();
@@ -153,13 +155,13 @@ const ManageTests: React.FC = () => {
   };
 
   // Lọc, tìm kiếm, phân trang
-  let filteredTests = filterCourse ? tests.filter(t => t.courseId === filterCourse) : tests;
+  let filteredTests = filterCourse ? tests.filter(t => t.courseId && t.courseId === filterCourse) : tests;
   if (search.trim()) {
     const keyword = search.trim().toLowerCase();
     filteredTests = filteredTests.filter(t =>
       t.name.toLowerCase().includes(keyword) ||
       t.description?.toLowerCase().includes(keyword) ||
-      (courses.find(c => c.id === t.courseId)?.name.toLowerCase().includes(keyword))
+      (t.courseId && courses.find(c => c.id === t.courseId)?.name.toLowerCase().includes(keyword))
     );
   }
   const totalPages = Math.ceil(filteredTests.length / PAGE_SIZE) || 1;
@@ -168,7 +170,7 @@ const ManageTests: React.FC = () => {
   // Thống kê số lượng đề theo môn
   const statsByCourse = courses.map(c => ({
     course: c,
-    count: tests.filter(t => t.courseId === c.id).length
+    count: tests.filter(t => t.courseId && t.courseId === c.id).length
   }));
 
   // Xuất file CSV
@@ -210,6 +212,21 @@ const ManageTests: React.FC = () => {
   const handleShowPreview = async (test: Test) => {
     const detail = await getTestById(test.id!);
     setShowPreview({ open: true, test: detail });
+  };
+
+  // Hàm thêm câu hỏi thủ công vào bài thi
+  const handleAddManualQuestion = async (test: Test, questionData: any) => {
+    // Lấy danh sách câu hỏi hiện tại + câu hỏi mới
+    const questions = [...(test.questions || []), questionData];
+    // Tính lại điểm cho từng câu hỏi (chia đều tổng điểm)
+    const totalScore = test.score || 10;
+    const perQuestionScore = +(totalScore / questions.length).toFixed(2);
+    questions.forEach(q => q.score = perQuestionScore);
+    await updateTest(test.id!, { questions });
+    // Đóng modal và reload lại chi tiết
+    setShowAddManual({open: false});
+    const detail = await getTestById(test.id!);
+    setShowDetail({ open: true, test: detail });
   };
 
   return (
@@ -286,46 +303,57 @@ const ManageTests: React.FC = () => {
         </>
       )}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-xl relative">
-            <button className="absolute top-2 right-2 text-slate-400 hover:text-slate-700" onClick={() => setShowForm(false)}>&times;</button>
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-xl relative p-4 sm:p-8">
+            <button className="absolute top-2 right-2 text-slate-400 hover:text-slate-700 text-2xl" onClick={() => setShowForm(false)}>&times;</button>
             <h2 className="text-xl font-bold mb-4">{editId ? 'Chỉnh sửa đề thi' : 'Thêm đề thi'}</h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <input type="text" name="name" className="w-full border rounded px-3 py-2" placeholder="Tên đề thi" value={formData.name} onChange={handleChange} required />
-              <textarea name="description" className="w-full border rounded px-3 py-2" placeholder="Mô tả" value={formData.description} onChange={handleChange} />
-              <input type="number" name="duration" className="w-full border rounded px-3 py-2" placeholder="Thời gian (phút)" value={formData.duration} onChange={handleChange} min={1} required />
-              <input type="number" name="score" className="w-full border rounded px-3 py-2" placeholder="Tổng điểm" value={formData.score} onChange={handleChange} min={1} required />
-              <select name="courseId" className="w-full border rounded px-3 py-2" value={formData.courseId} onChange={handleChange} required>
-                <option value="">-- Chọn môn học --</option>
-                {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-              <select name="questionBankId" className="w-full border rounded px-3 py-2" value={formData.questionBankId} onChange={handleChange} required>
-                <option value="">-- Chọn ngân hàng câu hỏi --</option>
-                {questionBanks.map(bank => (
-                  <option key={bank.id} value={bank.id}>{bank.name}</option>
-                ))}
-              </select>
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
+                <input type="text" name="name" className="w-full border rounded px-3 py-2" placeholder="Tên đề thi" value={formData.name} onChange={handleChange} required />
+              </div>
+              <div className="sm:col-span-2">
+                <textarea name="description" className="w-full border rounded px-3 py-2" placeholder="Mô tả" value={formData.description} onChange={handleChange} />
+              </div>
+              <div>
+                <input type="number" name="duration" className="w-full border rounded px-3 py-2" placeholder="Thời gian (phút)" value={formData.duration} onChange={handleChange} min={1} required />
+              </div>
+              <div>
+                <input type="number" name="score" className="w-full border rounded px-3 py-2" placeholder="Tổng điểm" value={formData.score} onChange={handleChange} min={1} required />
+              </div>
+              <div className="sm:col-span-2">
+                <select name="courseId" className="w-full border rounded px-3 py-2" value={formData.courseId} onChange={handleChange} required>
+                  <option value="">-- Chọn môn học --</option>
+                  {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </div>
+              <div className="sm:col-span-2">
+                <select name="questionBankId" className="w-full border rounded px-3 py-2" value={formData.questionBankId} onChange={handleChange} required>
+                  <option value="">-- Chọn ngân hàng câu hỏi --</option>
+                  {questionBanks.map(bank => (
+                    <option key={bank.id} value={bank.id}>{bank.name}</option>
+                  ))}
+                </select>
+              </div>
               {questions.length > 0 && (
-                <div>
+                <div className="sm:col-span-2">
                   <div className="font-semibold mb-2">Chọn câu hỏi cho đề thi:</div>
-                  <div className="max-h-48 overflow-y-auto border rounded p-2 bg-slate-50">
+                  <div className="max-h-40 overflow-y-auto border rounded p-2 bg-slate-50 grid grid-cols-1 gap-1">
                     {questions.map(q => (
-                      <label key={q.id} className="block mb-1 cursor-pointer">
+                      <label key={q.id} className="flex items-center gap-2 cursor-pointer">
                         <input
                           type="checkbox"
                           checked={selectedQuestions.includes(q.id!)}
                           onChange={() => handleQuestionSelect(q.id!)}
-                          className="mr-2"
                         />
-                        {q.content}
+                        <span className="text-sm">{q.content}</span>
                       </label>
                     ))}
                   </div>
                 </div>
               )}
-              <div className="flex justify-end gap-2">
-                <button type="button" className="px-4 py-2 bg-slate-200 rounded" onClick={() => setShowForm(false)}>Hủy</button>
-                <button type="submit" className="px-4 py-2 bg-sky-600 text-white rounded hover:bg-sky-700">Lưu</button>
+              <div className="sm:col-span-2 flex flex-col sm:flex-row justify-end gap-2 mt-2">
+                <button type="button" className="px-4 py-2 bg-slate-200 rounded w-full sm:w-auto" onClick={() => setShowForm(false)}>Hủy</button>
+                <button type="submit" className="px-4 py-2 bg-sky-600 text-white rounded hover:bg-sky-700 w-full sm:w-auto">Lưu</button>
               </div>
             </form>
           </div>
@@ -334,7 +362,7 @@ const ManageTests: React.FC = () => {
       {/* Modal xem chi tiết đề thi */}
       {showDetail.open && showDetail.test && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-xl relative">
+          <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-4xl relative">
             <button className="absolute top-2 right-2 text-slate-400 hover:text-slate-700" onClick={() => setShowDetail({ open: false })}>&times;</button>
             <h2 className="text-xl font-bold mb-4">Chi tiết đề thi: {showDetail.test.name}</h2>
             <div className="mb-2">Môn học: {courses.find(c => c.id === showDetail.test!.courseId)?.name || '-'}</div>
@@ -342,7 +370,21 @@ const ManageTests: React.FC = () => {
             <div className="mb-2">Thời gian: {showDetail.test.duration} phút</div>
             <div className="mb-2">Tổng điểm: {showDetail.test.score}</div>
             <div className="mb-2">Mô tả: {showDetail.test.description}</div>
-            <div className="mb-2">Số câu hỏi: {showDetail.test.questions?.length || 0}</div>
+            {/* Thống kê số lượng câu hỏi và độ khó */}
+            {(() => {
+              const totalQuestions = (showDetail.test.questions || []).length;
+              const easyCount = (showDetail.test.questions || []).filter(q => q.level === 'easy').length;
+              const mediumCount = (showDetail.test.questions || []).filter(q => q.level === 'medium').length;
+              const hardCount = (showDetail.test.questions || []).filter(q => q.level === 'hard').length;
+              return (
+                <div className="mb-2 text-sm text-slate-700">
+                  Tổng số câu hỏi: <b>{totalQuestions}</b> | Dễ: <b>{easyCount}</b> | Trung bình: <b>{mediumCount}</b> | Khó: <b>{hardCount}</b>
+                </div>
+              );
+            })()}
+            <div className="flex gap-2 mb-4">
+              <button className="px-4 py-2 bg-green-600 text-white rounded" onClick={()=>setShowAddManual({open:true, testId:showDetail.test!.id})}>+ Thêm thủ công</button>
+            </div>
             <div className="font-semibold mt-4 mb-2">Danh sách câu hỏi:</div>
             <ul className="list-decimal ml-6">
               {showDetail.test.questions?.map((q: any, idx: number) => (
@@ -350,6 +392,16 @@ const ManageTests: React.FC = () => {
               ))}
             </ul>
           </div>
+          {/* Modal thêm thủ công */}
+          {showAddManual.open && (
+            <QuestionForm
+              bankId={showDetail.test!.questionBankId || ''}
+              onSuccess={async (newQuestion: any) => {
+                await handleAddManualQuestion(showDetail.test!, newQuestion);
+              }}
+              onClose={()=>setShowAddManual({open:false})}
+            />
+          )}
         </div>
       )}
       {/* Modal xem trước đề thi */}

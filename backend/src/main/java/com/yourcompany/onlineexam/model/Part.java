@@ -67,6 +67,7 @@ public class Part {
     public static class QuestionInTest {
         private String id;
         private String content;
+        private String type;
         private String level;
         private Integer score;
         private List<Question.Option> options;
@@ -77,6 +78,8 @@ public class Part {
         public void setId(String id) { this.id = id; }
         public String getContent() { return content; }
         public void setContent(String content) { this.content = content; }
+        public String getType() { return type; }
+        public void setType(String type) { this.type = type; }
         public String getLevel() { return level; }
         public void setLevel(String level) { this.level = level; }
         public Integer getScore() { return score; }

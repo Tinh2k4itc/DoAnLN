@@ -6,6 +6,7 @@ import UserPage from "./UserPage/UserPage";
 import { auth, db } from "./shared/firebase-config";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
+import AdminCourseManagerPage from './AdminPage/manage-course/AdminCourseManagerPage';
 
 // Hook kiểm tra user đăng nhập & role
 export function useAuthRole() {
@@ -59,6 +60,11 @@ const App: React.FC = () => {
         <Route path="/admin" element={
           <ProtectedRoute requireRole="admin">
             <AdminForm />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/course/:id" element={
+          <ProtectedRoute requireRole="admin">
+            <AdminCourseManagerPage />
           </ProtectedRoute>
         } />
         <Route path="/user" element={

@@ -2,6 +2,8 @@ package com.yourcompany.onlineexam.controller;
 
 import com.yourcompany.onlineexam.model.Part;
 import com.yourcompany.onlineexam.service.PartService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,6 +15,7 @@ import java.util.concurrent.ExecutionException;
 @CrossOrigin(origins = "http://localhost:5173")
 public class PartController {
     private final PartService partService;
+    private static final Logger logger = LoggerFactory.getLogger(PartController.class);
 
     public PartController(PartService partService) {
         this.partService = partService;
@@ -26,6 +29,7 @@ public class PartController {
             }
             return ResponseEntity.ok(partService.getAllParts());
         } catch (Exception e) {
+            logger.error("Lỗi khi lấy danh sách parts với search '{}': ", search, e);
             return ResponseEntity.status(500).build();
         }
     }
@@ -37,6 +41,7 @@ public class PartController {
             if (part == null) return ResponseEntity.notFound().build();
             return ResponseEntity.ok(part);
         } catch (Exception e) {
+            logger.error("Lỗi khi lấy part {}: ", id, e);
             return ResponseEntity.status(500).build();
         }
     }
@@ -47,8 +52,10 @@ public class PartController {
             Part created = partService.createPart(part);
             return ResponseEntity.ok(created);
         } catch (IllegalArgumentException e) {
+            logger.warn("Lỗi validation khi tạo part: {}", e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
+            logger.error("Lỗi khi tạo part: ", e);
             return ResponseEntity.status(500).body("Lỗi server!");
         }
     }
@@ -59,8 +66,10 @@ public class PartController {
             Part updated = partService.updatePart(id, part);
             return ResponseEntity.ok(updated);
         } catch (IllegalArgumentException e) {
+            logger.warn("Lỗi validation khi cập nhật part {}: {}", id, e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
+            logger.error("Lỗi khi cập nhật part {}: ", id, e);
             return ResponseEntity.status(500).body("Lỗi server!");
         }
     }
@@ -71,6 +80,7 @@ public class PartController {
             partService.deletePart(id);
             return ResponseEntity.noContent().build();
         } catch (Exception e) {
+            logger.error("Lỗi khi xóa part {}: ", id, e);
             return ResponseEntity.status(500).build();
         }
     }

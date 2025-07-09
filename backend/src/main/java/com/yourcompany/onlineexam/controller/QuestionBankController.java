@@ -2,6 +2,8 @@ package com.yourcompany.onlineexam.controller;
 
 import com.yourcompany.onlineexam.model.QuestionBank;
 import com.yourcompany.onlineexam.service.QuestionBankService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,6 +15,7 @@ import java.util.concurrent.ExecutionException;
 @CrossOrigin(origins = "http://localhost:5173")
 public class QuestionBankController {
     private final QuestionBankService questionBankService;
+    private static final Logger logger = LoggerFactory.getLogger(QuestionBankController.class);
 
     public QuestionBankController(QuestionBankService questionBankService) {
         this.questionBankService = questionBankService;
@@ -24,6 +27,7 @@ public class QuestionBankController {
         try {
             return ResponseEntity.ok(questionBankService.getAll(search, courseId));
         } catch (Exception e) {
+            logger.error("Lỗi khi lấy danh sách question banks với search '{}' và courseId '{}': ", search, courseId, e);
             return ResponseEntity.status(500).build();
         }
     }
@@ -35,6 +39,7 @@ public class QuestionBankController {
             if (qb == null) return ResponseEntity.notFound().build();
             return ResponseEntity.ok(qb);
         } catch (Exception e) {
+            logger.error("Lỗi khi lấy question bank {}: ", id, e);
             return ResponseEntity.status(500).build();
         }
     }
@@ -45,6 +50,7 @@ public class QuestionBankController {
             QuestionBank created = questionBankService.create(qb);
             return ResponseEntity.ok(created);
         } catch (Exception e) {
+            logger.error("Lỗi khi tạo question bank: ", e);
             return ResponseEntity.status(500).body("Lỗi server!");
         }
     }
@@ -55,6 +61,7 @@ public class QuestionBankController {
             QuestionBank updated = questionBankService.update(id, qb);
             return ResponseEntity.ok(updated);
         } catch (Exception e) {
+            logger.error("Lỗi khi cập nhật question bank {}: ", id, e);
             return ResponseEntity.status(500).body("Lỗi server!");
         }
     }
@@ -65,6 +72,7 @@ public class QuestionBankController {
             questionBankService.delete(id);
             return ResponseEntity.noContent().build();
         } catch (Exception e) {
+            logger.error("Lỗi khi xóa question bank {}: ", id, e);
             return ResponseEntity.status(500).build();
         }
     }

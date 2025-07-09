@@ -14,7 +14,11 @@ const emptyBank: Omit<QuestionBank, 'id'|'totalQuestions'|'easyCount'|'mediumCou
   description: ''
 };
 
-const ManageQuestion: React.FC = () => {
+interface ManageQuestionProps {
+  courseId?: string;
+}
+
+const ManageQuestion: React.FC<ManageQuestionProps> = ({ courseId }) => {
   const [banks, setBanks] = useState<QuestionBank[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [parts, setParts] = useState<Part[]>([]);
@@ -22,7 +26,7 @@ const ManageQuestion: React.FC = () => {
   const [showCreate, setShowCreate] = useState(false);
   const [formData, setFormData] = useState(emptyBank);
   const [search, setSearch] = useState('');
-  const [searchCourse, setSearchCourse] = useState('');
+  const [searchCourse, setSearchCourse] = useState(courseId || '');
   const [showQuestionForm, setShowQuestionForm] = useState<{ open: boolean; bankId: string | null }>({ open: false, bankId: null });
   const [showImportExcel, setShowImportExcel] = useState<{ open: boolean; bankId: string | null }>({ open: false, bankId: null });
   const [showQuestionList, setShowQuestionList] = useState<{ open: boolean; bankId: string | null }>({ open: false, bankId: null });
@@ -31,12 +35,13 @@ const ManageQuestion: React.FC = () => {
     setLoading(true);
     try {
       const [bankData, courseData] = await Promise.all([
-        fetchQuestionBanks(search, searchCourse),
+        fetchQuestionBanks(search, courseId || searchCourse),
         fetchCourses()
       ]);
       setBanks(bankData);
       setCourses(courseData);
-    } catch {
+    } catch (err) {
+      console.error('Lỗi khi tải dữ liệu:', err);
       alert('Lỗi khi tải dữ liệu!');
     } finally {
       setLoading(false);
@@ -44,13 +49,14 @@ const ManageQuestion: React.FC = () => {
   };
 
   useEffect(() => {
+    if (courseId) setSearchCourse(courseId);
     loadData();
     fetchParts().then(setParts);
     // eslint-disable-next-line
-  }, [search, searchCourse]);
+  }, [search, searchCourse, courseId]);
 
   const handleOpenCreate = () => {
-    setFormData(emptyBank);
+    setFormData(courseId ? { ...emptyBank, courseId } : emptyBank);
     setShowCreate(true);
   };
 
@@ -82,7 +88,8 @@ const ManageQuestion: React.FC = () => {
       await createQuestionBank(formData);
       setShowCreate(false);
       await loadData();
-    } catch {
+    } catch (err) {
+      console.error('Lỗi khi tạo ngân hàng đề:', err);
       alert('Lỗi khi tạo ngân hàng đề!');
     }
   };
@@ -129,16 +136,18 @@ const ManageQuestion: React.FC = () => {
               onChange={e => setSearch(e.target.value)}
             />
           </div>
-          <select
-            className="px-3 py-2 border rounded-2xl w-full sm:w-64"
-            value={searchCourse}
-            onChange={e => setSearchCourse(e.target.value)}
-          >
-            <option value="">Tất cả môn học</option>
-            {courses.map(course => (
-              <option key={course.id} value={course.id}>{course.name} ({course.code})</option>
-            ))}
-          </select>
+          {!courseId && (
+            <select
+              className="px-3 py-2 border rounded-2xl w-full sm:w-64"
+              value={searchCourse}
+              onChange={e => setSearchCourse(e.target.value)}
+            >
+              <option value="">Tất cả môn học</option>
+              {courses.map(course => (
+                <option key={course.id} value={course.id}>{course.name} ({course.code})</option>
+              ))}
+            </select>
+          )}
           <button
             className="px-4 py-2 bg-sky-600 text-white rounded-lg shadow hover:bg-sky-700 focus:outline-none text-base font-semibold"
             onClick={handleOpenCreate}
@@ -200,14 +209,20 @@ const ManageQuestion: React.FC = () => {
             <h2 className="text-2xl font-bold mb-4">Tạo ngân hàng đề</h2>
             <form onSubmit={handleCreate} className="space-y-4">
               <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="Tên ngân hàng đề" className="w-full px-3 py-2 border rounded" required />
-              <select name="courseId" value={formData.courseId} onChange={handleChange} className="w-full px-3 py-2 border rounded" required>
-                <option value="">Chọn mã môn học</option>
-                {courses.map(course => (
-                  <option key={course.id} value={course.id}>{course.code} - {course.name}</option>
-                ))}
-              </select>
+              {courseId ? (
+                <div className="w-full px-3 py-2 border rounded bg-slate-100 text-slate-700">
+                  {courses.find(c => c.id === courseId)?.name || 'Môn học hiện tại'}
+                </div>
+              ) : (
+                <select name="courseId" value={formData.courseId} onChange={handleChange} className="w-full px-3 py-2 border rounded" required>
+                  <option value="">Chọn môn học</option>
+                  {courses.map(course => (
+                    <option key={course.id} value={course.id}>{course.name} ({course.code})</option>
+                  ))}
+                </select>
+              )}
               <input type="text" name="courseName" value={formData.courseName} onChange={handleChange} placeholder="Tên môn học" className="w-full px-3 py-2 border rounded" required />
-              <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Mô tả ngắn" className="w-full px-3 py-2 border rounded" />
+              <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Mô tả" className="w-full px-3 py-2 border rounded" />
               <div className="flex justify-end gap-2">
                 <button type="button" className="px-4 py-2 bg-slate-200 rounded" onClick={() => setShowCreate(false)}>Hủy</button>
                 <button type="submit" className="px-4 py-2 bg-sky-600 text-white rounded hover:bg-sky-700">Tạo</button>

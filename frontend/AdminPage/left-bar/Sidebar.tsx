@@ -38,10 +38,7 @@ interface SidebarProps {
 const mainNavItems: SidebarItemInfo[] = [
   { id: 'dashboard', label: 'Bảng điều khiển', icon: Squares2X2Icon },
   { id: 'manage-courses', label: 'Quản lý môn học', icon: BookOpenIcon },
-  { id: 'manage-question-banks', label: 'Ngân hàng câu hỏi', icon: QuestionMarkCircleIcon },
   { id: 'manage-users', label: 'Quản lý người dùng', icon: UsersIcon },
-  { id: 'exam-results', label: 'Kết quả thi', icon: ClipboardDocumentListIcon },
-  { id: 'system-settings', label: 'Cài đặt hệ thống', icon: Cog6ToothIcon },
 ];
 
 const accountNavItems: SidebarItemInfo[] = [

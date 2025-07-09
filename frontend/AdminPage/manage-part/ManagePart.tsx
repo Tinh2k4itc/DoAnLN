@@ -3,6 +3,8 @@ import { fetchParts, createPart, updatePart, deletePart, Part } from './PartApi'
 import { fetchCourses, Course } from '../manage-course/courseApi';
 import { fetchQuestionBanks, QuestionBank } from '../manage-question/QuestionBankApi';
 import { fetchQuestions, Question, updateQuestion, deleteQuestion } from '../manage-question/QuestionApi';
+import QuestionForm from '../manage-question/QuestionForm';
+import ImportQuestionExcel from '../manage-question/ImportQuestionExcel';
 
 const emptyPart: Omit<Part, 'id'> = {
   name: '',
@@ -21,6 +23,7 @@ const emptyPart: Omit<Part, 'id'> = {
 interface QuestionInTest {
   id: string;
   content: string;
+  type: string;
   level: string;
   score: number;
   options?: any[];
@@ -63,6 +66,10 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
   const [showSelectQuestionModal, setShowSelectQuestionModal] = useState(false);
   const [tempSelectedQuestions, setTempSelectedQuestions] = useState<Question[]>([]);
   const [editingModalQuestion, setEditingModalQuestion] = useState<Question|null>(null);
+  const [questionSource, setQuestionSource] = useState<'bank'|'custom'>('bank');
+  const [bankTab, setBankTab] = useState<'auto'|'manual'>('auto');
+  const [showImportExcel, setShowImportExcel] = useState<{open: boolean, bankId: string | null}>({open: false, bankId: null});
+  const [showViewQuestions, setShowViewQuestions] = useState(false);
 
   const defaultOptions = {
     truefalse: [
@@ -94,7 +101,8 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
       if (courseData.length === 0) {
         setLoadError('Không có dữ liệu môn học. Vui lòng tạo môn học trước khi tạo bài thi!');
       }
-    } catch {
+    } catch (err) {
+      console.error('Lỗi khi tải dữ liệu:', err);
       setLoadError('Lỗi khi tải dữ liệu!');
     } finally {
       setLoading(false);
@@ -146,7 +154,8 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
     try {
       await deletePart(id);
       await loadData();
-    } catch {
+    } catch (err) {
+      console.error('Lỗi khi xóa bài thi:', err);
       alert('Lỗi khi xóa bài thi!');
     }
   };
@@ -220,6 +229,7 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
     let questionsToSave: QuestionInTest[] = selectedQuestions.map(q => ({
       id: q.id?.toString() || '',
       content: q.content,
+      type: q.type,
       level: q.level,
       score: scoreMode==='per-question' ? questionScores[q.id?.toString() || ''] || 1 : +(totalScore/selectedQuestions.length).toFixed(2),
       options: q.options ? JSON.parse(JSON.stringify(q.options)) : undefined,
@@ -284,8 +294,8 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
   const handleSaveEditQuestion = async (q: any) => {
     if (!showView.part) return;
     const newQuestions = (showView.part.questions || []).map((item: any) => item.id === q.id ? q : item);
-    await updatePart(String(showView.part.id), {...showView.part, questions: newQuestions});
-    setShowView({open: true, part: {...showView.part, questions: newQuestions}});
+    await updatePart(String(showView.part.id), { ...showView.part, questions: newQuestions });
+    setShowView({ open: true, part: { ...showView.part, questions: newQuestions } });
     setEditingQuestion(null);
   };
 
@@ -314,11 +324,32 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
     setShowBankModal(false);
   };
 
+  const handleAddNewQuestion = async (newQuestion: any) => {
+    if (!showView.part) return;
+    const newQuestions = [...(showView.part.questions || []), newQuestion];
+    await updatePart(String(showView.part.id), {...showView.part, questions: newQuestions});
+    setShowView({ open: true, part: { ...showView.part, questions: newQuestions } });
+    setAddingQuestion(false);
+    setEditingQuestion(null);
+  };
+
+  const handleImportExcel = (questionsFromExcel: any[]) => {
+    setSelectedQuestions([...selectedQuestions, ...questionsFromExcel]);
+  };
+
+  // Hàm chuyển type sang text tiếng Việt
+  const getTypeLabel = (type: string) => {
+    if (type === 'truefalse') return 'Đúng/Sai';
+    if (type === 'single') return '1 đáp án đúng';
+    if (type === 'multiple') return 'Nhiều đáp án đúng';
+    return type;
+  };
+
   return (
-    <div className="relative min-h-screen bg-slate-50 p-6">
+    <div className="relative min-h-screen bg-slate-50 p-2 sm:p-6 overflow-x-auto">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
-        <h1 className="text-3xl font-bold">Quản lý bài thi</h1>
-        <div className="flex gap-2 items-center w-full sm:w-auto">
+        <h1 className="text-2xl sm:text-3xl font-bold">Quản lý bài thi</h1>
+        <div className="flex flex-col sm:flex-row gap-2 items-center w-full sm:w-auto">
           <div className="relative w-full sm:w-64">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z" /></svg>
@@ -332,7 +363,7 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
             />
           </div>
           <button
-            className="px-4 py-2 bg-sky-600 text-white rounded-lg shadow hover:bg-sky-700 focus:outline-none text-base font-semibold"
+            className="px-4 py-2 bg-sky-600 text-white rounded-lg shadow hover:bg-sky-700 focus:outline-none text-base font-semibold w-full sm:w-auto"
             onClick={handleOpenCreate}
           >
             + Thêm bài thi
@@ -342,7 +373,7 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
       {loading ? (
         <div className="text-center text-slate-500">Đang tải...</div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8 mt-8">
           {parts.length === 0 ? (
             <div className="col-span-full flex flex-col items-center text-gray-400 mt-16">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2a4 4 0 018 0v2m-4-4v4m0 0v4m0-4h4m-4 0H7" /></svg>
@@ -351,26 +382,31 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
           ) : (
             parts.map(part => {
               const course = courses.find(c => c.id === part.courseId);
+              const totalQuestions = (part.questions || []).length;
+              const easyCount = (part.questions || []).filter(q => q.level === 'easy').length;
+              const mediumCount = (part.questions || []).filter(q => q.level === 'medium').length;
+              const hardCount = (part.questions || []).filter(q => q.level === 'hard').length;
               return (
                 <div
                   key={part.id}
-                  className="bg-white rounded-2xl shadow-lg p-6 flex flex-col min-h-[220px] transition-transform hover:scale-105 hover:shadow-2xl border border-slate-100 relative"
+                  className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 flex flex-col min-h-[220px] transition-transform hover:scale-105 hover:shadow-2xl border border-slate-100 relative overflow-x-auto"
                 >
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="bg-sky-100 text-sky-600 rounded-full p-2">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 mb-2">
+                    <div className="bg-sky-100 text-sky-600 rounded-full p-2 w-fit mx-auto sm:mx-0">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zm0 0V4m0 7v7" /></svg>
                     </div>
-                    <div>
-                      <div className="font-bold text-xl mb-1">{part.name}</div>
-                      <div className="text-gray-600 text-sm">Môn học: <span className="font-semibold">{course?.name || ''}</span></div>
-                      <div className="text-gray-600 text-sm">Mã môn học: <span className="font-semibold">{course?.code || ''}</span></div>
-                      <div className="text-gray-600 text-sm">Thời gian: <span className="font-semibold">{part.duration} phút</span></div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-lg sm:text-xl mb-1 truncate">{part.name}</div>
+                      <div className="text-gray-600 text-sm truncate">Môn học: <span className="font-semibold">{course?.name || ''}</span></div>
+                      <div className="text-gray-600 text-sm truncate">Mã môn học: <span className="font-semibold">{course?.code || ''}</span></div>
+                      <div className="text-gray-600 text-sm truncate">Thời gian: <span className="font-semibold">{part.duration} phút</span></div>
+                      <div className="text-slate-700 text-xs mt-2">Tổng số câu hỏi: <b>{totalQuestions}</b> | Dễ: <b>{easyCount}</b> | Trung bình: <b>{mediumCount}</b> | Khó: <b>{hardCount}</b></div>
                     </div>
                   </div>
-                  <div className="flex gap-2 mt-auto">
-                    <button className="px-2 py-1 bg-yellow-500 text-white rounded" onClick={() => handleOpenEdit(part)}>Chỉnh sửa</button>
-                    <button className="px-2 py-1 bg-red-500 text-white rounded" onClick={() => handleDelete(part.id)}>Xóa</button>
-                    <button className="px-2 py-1 bg-blue-500 text-white rounded" onClick={() => handleView(part)}>Xem đề thi</button>
+                  <div className="flex flex-col sm:flex-row gap-2 mt-auto">
+                    <button className="px-2 py-1 bg-yellow-500 text-white rounded w-full sm:w-auto" onClick={() => handleOpenEdit(part)}>Chỉnh sửa</button>
+                    <button className="px-2 py-1 bg-red-500 text-white rounded w-full sm:w-auto" onClick={() => handleDelete(part.id)}>Xóa</button>
+                    <button className="px-2 py-1 bg-blue-500 text-white rounded w-full sm:w-auto" onClick={() => handleView(part)}>Xem đề thi</button>
                   </div>
                 </div>
               );
@@ -381,7 +417,7 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
 
       {showCreate && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="relative bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl">
+          <div className="relative bg-white rounded-xl shadow-2xl p-4 sm:p-8 w-full max-w-lg sm:max-w-xl max-h-[90vh] overflow-y-auto">
             <button
               className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-2xl font-bold focus:outline-none"
               onClick={() => {
@@ -417,26 +453,34 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
                   </div>
                   <div className="space-y-2">
                     <label className="block font-medium">Môn học</label>
-                    <select name="courseId" value={formData.courseId} onChange={handleChange} className="w-full px-3 py-2 border rounded" required>
-                      <option value="">Chọn môn học</option>
-                      {courses.map(course => (
-                        <option key={course.id} value={course.id}>{course.name} ({course.code})</option>
-                      ))}
-                    </select>
+                    {courseId ? (
+                      <div className="w-full px-3 py-2 border rounded bg-slate-100 text-slate-700">
+                        {courses.find(c => c.id === courseId)?.name || 'Môn học hiện tại'}
+                      </div>
+                    ) : (
+                      <select name="courseId" value={formData.courseId} onChange={handleChange} className="w-full px-3 py-2 border rounded" required>
+                        <option value="">Chọn môn học</option>
+                        {courses.map(course => (
+                          <option key={course.id} value={course.id}>{course.name} ({course.code})</option>
+                        ))}
+                      </select>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <label className="block font-medium">Số lần thi lại tối đa</label>
                     <input type="number" name="maxRetake" value={formData.maxRetake ?? 1} onChange={handleChange} placeholder="Số lần thi lại tối đa" className="w-full px-3 py-2 border rounded" min={0} />
                   </div>
-                  <div className="space-y-2">
-                    <label className="block font-medium">Thời gian mở đề thi</label>
-                    <input type="datetime-local" name="openTime" value={formData.openTime || ''} onChange={handleChange} className="w-full px-3 py-2 border rounded" />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="block font-medium">Thời gian mở đề thi</label>
+                      <input type="datetime-local" name="openTime" value={formData.openTime || ''} onChange={handleChange} className="w-full px-3 py-2 border rounded" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="block font-medium">Thời gian đóng đề thi</label>
+                      <input type="datetime-local" name="closeTime" value={formData.closeTime || ''} onChange={handleChange} className="w-full px-3 py-2 border rounded" />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <label className="block font-medium">Thời gian đóng đề thi</label>
-                    <input type="datetime-local" name="closeTime" value={formData.closeTime || ''} onChange={handleChange} className="w-full px-3 py-2 border rounded" />
-                  </div>
-                  <div className="flex gap-6 items-center mt-2">
+                  <div className="flex flex-wrap gap-6 items-center mt-2">
                     <label className="flex items-center gap-2">
                       <input type="checkbox" name="randomizeQuestions" checked={!!formData.randomizeQuestions} onChange={e => setFormData(f => ({ ...f, randomizeQuestions: e.target.checked }))} />
                       Random câu hỏi
@@ -460,173 +504,146 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
                     <label className="font-medium" htmlFor="showAnswerAfterSubmit">Hiển thị đáp án sau khi nộp bài</label>
                   </div>
                   <div className="flex justify-end gap-2 mt-4">
-                    <button type="button" className="px-4 py-2 bg-sky-600 text-white rounded" onClick={() => setStep(2)} disabled={!formData.name || !formData.courseId}>Tiếp tục</button>
+                    <button type="button" className="px-4 py-2 bg-sky-600 text-white rounded" onClick={() => setStep(2)} disabled={!formData.name || (!formData.courseId && !courseId)}>
+                      Tiếp tục
+                    </button>
                   </div>
                 </>
               )}
               {step === 2 && (
                 <>
-                  <div className="flex gap-2 mb-2">
-                    <button type="button" onClick={() => setSelectMode('auto')} className={selectMode==='auto'?'bg-sky-600 text-white px-3 py-1 rounded':'bg-slate-200 px-3 py-1 rounded'}>Chọn tự động</button>
-                    <button type="button" onClick={() => setSelectMode('manual')} className={selectMode==='manual'?'bg-sky-600 text-white px-3 py-1 rounded':'bg-slate-200 px-3 py-1 rounded'}>Chọn thủ công</button>
+                  <div className="flex gap-2 mb-4">
+                    <button type="button" className={`px-4 py-2 rounded font-semibold ${questionSource==='bank'?'bg-sky-600 text-white':'bg-slate-200'}`} onClick={()=>setQuestionSource('bank')}>Thêm từ ngân hàng đề</button>
+                    <button type="button" className={`px-4 py-2 rounded font-semibold ${questionSource==='custom'?'bg-sky-600 text-white':'bg-slate-200'}`} onClick={()=>setQuestionSource('custom')}>Tạo câu hỏi mới</button>
                   </div>
-                  {selectMode==='auto' && (
+                  {questionSource==='bank' && (
                     <>
-                      <div className="space-y-2 mb-2">
-                        <label className="block font-medium">Ngân hàng đề</label>
-                        <select value={selectedBankId} onChange={e => setSelectedBankId(e.target.value)} className="w-full border rounded mb-2">
+                      <div className="mb-4">
+                        <label className="block font-medium mb-1">Ngân hàng đề</label>
+                        <select value={selectedBankId} onChange={e => {setSelectedBankId(e.target.value); setSelectedQuestions([]);}} className="w-full border rounded px-3 py-2">
                           <option value="">Chọn ngân hàng đề</option>
                           {questionBanks.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                         </select>
-                        <div className="mt-2">Tổng số câu đã chọn: {selectedQuestions.length}</div>
                       </div>
+                      {selectedBankId && (
+                        <>
+                          <div className="flex gap-2 mb-2">
+                            <button type="button" onClick={()=>setBankTab('auto')} className={bankTab==='auto'?'bg-sky-600 text-white px-3 py-1 rounded':'bg-slate-200 px-3 py-1 rounded'}>Chọn tự động</button>
+                            <button type="button" onClick={()=>setBankTab('manual')} className={bankTab==='manual'?'bg-sky-600 text-white px-3 py-1 rounded':'bg-slate-200 px-3 py-1 rounded'}>Chọn thủ công</button>
+                          </div>
+                          {bankTab==='auto' && (
+                            <>
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                                <div>
+                                  <label className="block font-medium">Số câu dễ</label>
+                                  <input type="number" min={0} value={autoEasy} onChange={e=>setAutoEasy(+e.target.value)} className="w-full px-3 py-2 border rounded" />
+                                </div>
+                                <div>
+                                  <label className="block font-medium">Số câu trung bình</label>
+                                  <input type="number" min={0} value={autoMedium} onChange={e=>setAutoMedium(+e.target.value)} className="w-full px-3 py-2 border rounded" />
+                                </div>
+                                <div>
+                                  <label className="block font-medium">Số câu khó</label>
+                                  <input type="number" min={0} value={autoHard} onChange={e=>setAutoHard(+e.target.value)} className="w-full px-3 py-2 border rounded" />
+                                </div>
+                              </div>
+                              <button type="button" className="px-4 py-2 bg-green-600 text-white rounded" onClick={()=>{
+                                const qs = questions.filter(q=>q.questionBankId===selectedBankId);
+                                const easy = qs.filter(q=>q.level==='easy');
+                                const medium = qs.filter(q=>q.level==='medium');
+                                const hard = qs.filter(q=>q.level==='hard');
+                                const getRandom = (arr: any[], n: number) => arr.sort(()=>Math.random()-0.5).slice(0, n);
+                                const selected = [
+                                  ...getRandom(easy, autoEasy),
+                                  ...getRandom(medium, autoMedium),
+                                  ...getRandom(hard, autoHard)
+                                ];
+                                setSelectedQuestions(selected);
+                              }}>Chọn câu hỏi ngẫu nhiên</button>
+                              <button type="button" className="ml-2 px-4 py-2 bg-blue-600 text-white rounded" onClick={()=>setShowViewQuestions(true)}>Xem câu hỏi</button>
+                            </>
+                          )}
+                          {bankTab==='manual' && (
+                            <>
+                              <div className="mt-2">Tổng số câu đã thêm: {selectedQuestions.length}</div>
+                              <ul className="space-y-2 mt-2 max-h-60 overflow-y-auto">
+                                {questions.filter(q=>q.questionBankId===selectedBankId).map((q, idx) => (
+                                  <li key={q.id || idx} className="border rounded p-3 bg-slate-50 flex items-center gap-2">
+                                    <input type="checkbox" checked={selectedQuestions.some(x=>x.id===q.id)} onChange={()=>{
+                                      if(selectedQuestions.some(x=>x.id===q.id)) setSelectedQuestions(selectedQuestions.filter(x=>x.id!==q.id));
+                                      else setSelectedQuestions([...selectedQuestions, q]);
+                                    }} />
+                                    <span className="font-semibold">{q.content} <span className="ml-2 text-xs text-slate-500">({q.level})</span></span>
+                                  </li>
+                                ))}
+                              </ul>
+                              <button type="button" className="mt-2 px-4 py-2 bg-green-600 text-white rounded" onClick={()=>setSelectedQuestions([...selectedQuestions])} disabled={selectedQuestions.length===0}>Lưu câu hỏi đã chọn</button>
+                            </>
+                          )}
+                        </>
+                      )}
                     </>
                   )}
-                  {selectMode==='manual' && (
+                  {questionSource==='custom' && (
                     <>
-                      <button
-                        type="button"
-                        className="px-3 py-1 bg-green-600 text-white rounded mb-2"
-                        onClick={() => {
-                          setEditingQuestion({
-                            content: '',
-                            type: 'truefalse',
-                            level: 'easy',
-                            options: defaultOptions['truefalse'],
-                          });
+                      <div className="flex gap-2 mb-2">
+                        <button type="button" className="px-3 py-1 bg-green-600 text-white rounded" onClick={()=>{
+                          setEditingQuestion({ content: '', type: 'truefalse', level: 'easy', options: defaultOptions['truefalse'] });
                           setAddingQuestion(true);
-                        }}
-                      >
-                        + Thêm câu hỏi thủ công
-                      </button>
+                        }}>Tạo câu hỏi mới</button>
+                        <button type="button" className="px-3 py-1 bg-blue-600 text-white rounded" onClick={()=>setShowImportExcel({open: true, bankId: null})}>Import Excel</button>
+                      </div>
                       <div className="mt-2">Tổng số câu đã thêm: {selectedQuestions.length}</div>
-                      <ul className="space-y-2 mt-2">
+                      <ul className="space-y-2 mt-2 max-h-60 overflow-y-auto">
                         {selectedQuestions.map((q, idx) => (
-                          <li key={q.id || idx} className="border rounded p-3 bg-slate-50 flex flex-col gap-1">
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold">{idx+1}. {q.content} <span className="ml-2 text-xs text-slate-500">({q.level})</span></span>
-                              <button className="px-2 py-1 bg-yellow-500 text-white rounded" onClick={()=>setEditingQuestion({...q, idx})}>Sửa</button>
-                              <button className="px-2 py-1 bg-red-500 text-white rounded" onClick={()=>setSelectedQuestions(selectedQuestions.filter((_: any, i: number) => i !== idx))}>Xóa</button>
-                            </div>
-                            {editingQuestion && (editingQuestion.options || []).map((opt: any, i: number) => (
-                              <li key={i} className={opt.correct ? 'font-bold text-green-600' : ''}>
-                                {String.fromCharCode(65+i)}. {opt.text} {opt.correct ? '(Đúng)' : ''}
-                              </li>
-                            ))}
-                            {typeof editingQuestion?.answer === 'string' && editingQuestion?.answer && !editingQuestion?.options && (
-                              <div className="pl-8 text-green-700 font-bold">Đáp án: {editingQuestion?.answer}</div>
-                            )}
+                          <li key={q.id || idx} className="border rounded p-3 flex flex-col gap-1">
+                            <span className="font-semibold">{idx+1}. {q.content} <span className="ml-2 text-xs text-slate-500">({q.level})</span></span>
                           </li>
                         ))}
                       </ul>
-                      {addingQuestion && editingQuestion && (
-                        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-                          <div className="relative bg-white rounded-lg shadow-lg p-6 w-full max-w-lg">
-                            <button
-                              className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-2xl font-bold focus:outline-none"
-                              onClick={() => {
-                                setAddingQuestion(false);
-                                setEditingQuestion(null);
-                              }}
-                              aria-label="Đóng"
-                            >
-                              ×
-                            </button>
-                            <h3 className="text-2xl font-bold mb-6 text-center">Thêm câu hỏi thủ công</h3>
-                            <form onSubmit={async e => {
-                              e.preventDefault();
-                              if (!editingQuestion?.content || !editingQuestion?.level) { alert('Vui lòng nhập đủ nội dung và mức độ!'); return; }
-                              if (editingQuestion.type==='single' && (!editingQuestion.options || editingQuestion.options.filter((o:any)=>o.correct).length !== 1)) { alert('Phải chọn đúng 1 đáp án đúng!'); return; }
-                              if (editingQuestion.type==='multiple' && (!editingQuestion.options || editingQuestion.options.filter((o:any)=>o.correct).length < 1)) { alert('Phải chọn ít nhất 1 đáp án đúng!'); return; }
-                              if ((editingQuestion.type==='single' || editingQuestion.type==='multiple') && (!editingQuestion.options || editingQuestion.options.some((o:any)=>!o.text))) { alert('Vui lòng nhập đầy đủ đáp án!'); return; }
-                              if (showView.open && showView.part) {
-                                const newQuestions = [...(showView.part.questions || []), { ...editingQuestion, id: Date.now().toString() }];
-                                await updatePart(String(showView.part.id), { ...showView.part, questions: newQuestions });
-                                setShowView({ open: true, part: { ...showView.part, questions: newQuestions } });
-                              }
-                              setEditingQuestion(null);
-                              setAddingQuestion(false);
-                            }} className="space-y-4">
-                              <div>
-                                <label className="block font-medium mb-1">Nội dung câu hỏi</label>
-                                <textarea className="w-full border rounded px-3 py-2" placeholder="Nhập nội dung câu hỏi" value={editingQuestion?.content || ''} onChange={e=>setEditingQuestion({...editingQuestion, content: e.target.value})} required />
-                              </div>
-                              <div className="flex gap-2">
-                                <select className="px-3 py-2 border rounded" value={editingQuestion?.type || 'truefalse'} onChange={e => {
-                                  if (!editingQuestion) return;
-                                  const t = e.target.value as 'truefalse' | 'single' | 'multiple';
-                                  setEditingQuestion({
-                                    ...editingQuestion,
-                                    type: t,
-                                    options: defaultOptions[t]
-                                  });
-                                }}>
-                                  <option value="truefalse">Đúng/Sai</option>
-                                  <option value="single">1 đáp án đúng</option>
-                                  <option value="multiple">Nhiều đáp án đúng</option>
-                                </select>
-                                <select className="px-3 py-2 border rounded" value={editingQuestion?.level || 'easy'} onChange={e=>{
-                                  if (!editingQuestion) return;
-                                  setEditingQuestion({...editingQuestion, level: e.target.value as 'easy'|'medium'|'hard'});
-                                }}>
-                                  <option value="easy">Dễ</option>
-                                  <option value="medium">Trung bình</option>
-                                  <option value="hard">Khó</option>
-                                </select>
-                              </div>
-                              <div className="space-y-2">
-                                {(editingQuestion.options || []).map((opt:any, idx:number) => (
-                                  <div key={idx} className="flex items-center gap-2">
-                                    {editingQuestion.type !== 'truefalse' && (
-                                      <span className="text-slate-500">{String.fromCharCode(65 + idx)}.</span>
-                                    )}
-                                    <input
-                                      type="text"
-                                      value={opt.text}
-                                      onChange={e => {
-                                        const opts = [...(editingQuestion.options||[])];
-                                        opts[idx].text = e.target.value;
-                                        setEditingQuestion({...editingQuestion, options: opts});
-                                      }}
-                                      className="flex-1 px-3 py-2 border rounded"
-                                      placeholder={editingQuestion.type === 'truefalse' ? (idx === 0 ? 'Đúng' : 'Sai') : 'Đáp án'}
-                                      required
-                                      disabled={editingQuestion.type === 'truefalse'}
-                                    />
-                                    <input
-                                      type={editingQuestion.type === 'multiple' ? 'checkbox' : 'radio'}
-                                      checked={opt.correct}
-                                      onChange={() => {
-                                        if (editingQuestion.type === 'single' || editingQuestion.type === 'truefalse') {
-                                          setEditingQuestion({...editingQuestion, options: (editingQuestion.options||[]).map((o:any, i:number) => ({ ...o, correct: i === idx }))});
-                                        } else {
-                                          setEditingQuestion({...editingQuestion, options: (editingQuestion.options||[]).map((o:any, i:number) => i === idx ? { ...o, correct: !o.correct } : o)});
-                                        }
-                                      }}
-                                      name="correct"
-                                    />
-                                    {editingQuestion.type === 'multiple' && editingQuestion.options.length > 2 && (
-                                      <button type="button" className="text-red-500" onClick={() => {
-                                        setEditingQuestion({...editingQuestion, options: (editingQuestion.options||[]).filter((_: any, i: number) => i !== idx)});
-                                      }}>X</button>
-                                    )}
-                                  </div>
-                                ))}
-                                {editingQuestion.type === 'multiple' && (
-                                  <button type="button" className="px-2 py-1 bg-slate-200 rounded" onClick={() => {
-                                    setEditingQuestion({...editingQuestion, options:[...(editingQuestion.options||[]),{text:'',correct:false}]});
-                                  }}>+ Thêm đáp án</button>
-                                )}
-                              </div>
-                              <div className="flex justify-end gap-2 mt-8">
-                                <button type="button" className="px-5 py-2 bg-slate-200 rounded font-semibold" onClick={()=>{setAddingQuestion(false);setEditingQuestion(null);}}>Hủy</button>
-                                <button type="submit" className="px-5 py-2 bg-sky-600 text-white rounded font-semibold">Lưu</button>
-                              </div>
-                            </form>
-                          </div>
-                        </div>
-                      )}
                     </>
+                  )}
+                  <div className="mt-4">
+                    <h4 className="font-semibold mb-2">Danh sách câu hỏi đã chọn:</h4>
+                    <ul className="space-y-1 max-h-40 overflow-y-auto">
+                      {selectedQuestions.map((q, idx) => (
+                        <li key={q.id || idx} className="flex items-center gap-2">
+                          <span>{idx+1}. {q.content} <span className="text-xs text-slate-500">({q.level})</span></span>
+                          <button
+                            className="ml-2 px-2 py-1 bg-red-500 text-white rounded"
+                            type="button"
+                            onClick={() => setSelectedQuestions(selectedQuestions.filter(x => x.id !== q.id))}
+                          >Xóa</button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  {showViewQuestions && (
+                    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl relative">
+                        <button className="absolute top-2 right-2 text-slate-400 hover:text-slate-700 text-2xl font-bold" onClick={()=>setShowViewQuestions(false)}>&times;</button>
+                        <h2 className="text-xl font-bold mb-4">Danh sách câu hỏi đã chọn</h2>
+                        <ul className="space-y-4 max-h-96 overflow-y-auto">
+                          {selectedQuestions.map((q, idx) => (
+                            <li key={q.id || idx} className="border rounded p-3 bg-slate-50">
+                              <div className="font-semibold mb-1">{idx+1}. {q.content}</div>
+                              <div className="text-xs text-slate-500">
+                                Loại: {getTypeLabel(q.type)} | Độ khó: {q.level}
+                              </div>
+                              {q.options && (
+                                <ul className="pl-4">
+                                  {q.options.map((opt: any, i: number) => (
+                                    <li key={i} className={opt.correct ? 'font-bold text-green-600' : ''}>
+                                      {String.fromCharCode(65+i)}. {opt.text} {opt.correct ? '(Đúng)' : ''}
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
                   )}
                   <div className="flex justify-end gap-2 mt-4">
                     <button type="button" className="px-4 py-2 bg-slate-200 rounded" onClick={()=>setStep(1)}>Quay lại</button>
@@ -725,7 +742,7 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
 
       {showView.open && showView.part && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="relative bg-white rounded-lg shadow-lg p-8 w-full max-h-[90vh] overflow-y-auto">
+          <div className="relative bg-white border border-slate-200 shadow-2xl rounded-xl p-8 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <button
               className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-2xl font-bold focus:outline-none"
               onClick={() => setShowView({open: false, part: null})}
@@ -741,20 +758,41 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
               <div><b>Random câu hỏi:</b> {showView.part.randomizeQuestions ? 'Có' : 'Không'}</div>
               <div><b>Chống gian lận:</b> {showView.part.enableAntiCheat ? 'Có' : 'Không'}</div>
               <div><b>Cảnh báo chuyển tab:</b> {showView.part.enableTabWarning ? 'Có' : 'Không'}</div>
+              {(() => {
+                const totalQuestions = (showView.part.questions || []).length;
+                const easyCount = (showView.part.questions || []).filter(q => q.level === 'easy').length;
+                const mediumCount = (showView.part.questions || []).filter(q => q.level === 'medium').length;
+                const hardCount = (showView.part.questions || []).filter(q => q.level === 'hard').length;
+                return (
+                  <div className="mt-2 text-sm text-slate-700">
+                    Tổng số câu hỏi: <b>{totalQuestions}</b> | Dễ: <b>{easyCount}</b> | Trung bình: <b>{mediumCount}</b> | Khó: <b>{hardCount}</b>
+                  </div>
+                );
+              })()}
             </div>
             <div className="flex gap-4 mb-4">
               <button className="px-4 py-2 bg-green-600 text-white rounded font-semibold" type="button" onClick={()=>{ setEditingQuestion({ content: '', type: 'truefalse', level: 'easy', options: defaultOptions['truefalse'] }); setAddingQuestion(true); }}>
                 + Thêm thủ công
               </button>
-              <button className="px-4 py-2 bg-blue-600 text-white rounded font-semibold" type="button" onClick={()=>setShowBankModal(true)}>
+              <button className="px-4 py-2 bg-blue-600 text-white rounded font-semibold" type="button" onClick={async () => {
+                if (!showView.part) return;
+                setSelectedBankId('');
+                setBankQuestions([]);
+                setSelectedBankQuestions([]);
+                const banks = await fetchQuestionBanks('', showView.part.courseId);
+                setQuestionBanks(banks);
+                setShowBankModal(true);
+              }}>
                 + Thêm từ ngân hàng đề
               </button>
             </div>
             <ul className="space-y-4 max-h-[60vh] overflow-y-auto">
               {(showView.part.questions||[]).map((q: any, idx: number) => (
-                <li key={q.id} className="border rounded p-3 flex flex-col gap-1 bg-slate-50">
+                <li key={q.id || `question-${idx}`} className="border rounded p-3 flex flex-col gap-1 bg-slate-50">
                   <div className="font-semibold">{idx + 1}. {q.content}</div>
-                  <div className="text-xs text-slate-500">Loại: {q.type} | Độ khó: {q.level}</div>
+                  <div className="text-xs text-slate-500">
+                    Loại: {getTypeLabel(q.type)} | Độ khó: {q.level}
+                  </div>
                   {q.options && (
                     <ul className="pl-4 text-sm">
                       {q.options.map((opt: any, i: number) => (
@@ -774,7 +812,7 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
                 </li>
               ))}
             </ul>
-            {showBankModal && (
+            {showBankModal && showView.open && showView.part && (
               <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
                 <div className="relative bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
                   <button
@@ -793,7 +831,7 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
                     <button type="button" className="px-4 py-2 bg-slate-200 rounded" onClick={()=>setShowBankModal(false)}>Hủy</button>
                     <button type="button" className="px-4 py-2 bg-sky-600 text-white rounded" onClick={async()=>{
                       if (!selectedBankId) { alert('Vui lòng chọn ngân hàng đề!'); return; }
-                      await fetchQuestions(selectedBankId).then(setQuestions);
+                      await fetchQuestions(selectedBankId).then(setBankQuestions);
                       setShowBankModal(false);
                       setShowSelectQuestionModal(true);
                     }}>Tiếp tục</button>
@@ -805,50 +843,7 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
         </div>
       )}
 
-      {showBankModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="relative bg-white rounded-lg shadow-lg p-6 w-full max-w-lg">
-            <button
-              className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-2xl font-bold focus:outline-none"
-              onClick={() => setShowBankModal(false)}
-              aria-label="Đóng"
-            >
-              ×
-            </button>
-            <h3 className="text-xl font-bold mb-4">Chọn câu hỏi từ ngân hàng đề</h3>
-            <ul className="max-h-64 overflow-y-auto border rounded p-2 mb-4">
-              {bankQuestions.map(q=>(
-                <li key={q.id} className="flex items-center gap-2 mb-2">
-                  <input type="checkbox" checked={selectedBankQuestions.includes(String(q.id))} onChange={()=>setSelectedBankQuestions(sel=>{
-                    const idStr = String(q.id);
-                    if (sel.includes(idStr)) return sel.filter(id=>id!==idStr).filter(Boolean);
-                    return [...sel, idStr].filter(Boolean);
-                  })} />
-                  <span>{q.content} ({q.level})</span>
-                  {(q as any).options && (
-                    <ul className="pl-4">
-                      {(q as any).options.map((opt: any, i: number) => (
-                        <li key={i} className={opt.correct ? 'font-bold text-green-600' : ''}>
-                          {String.fromCharCode(65+i)}. {opt.text} {opt.correct ? '(Đúng)' : ''}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  {typeof (q as any).answer === 'string' && (q as any).answer && !q.options && (
-                    <div className="text-green-700 font-bold">Đáp án: {(q as any).answer}</div>
-                  )}
-                </li>
-              ))}
-            </ul>
-            <div className="flex justify-end gap-2">
-              <button type="button" className="px-4 py-2 bg-slate-200 rounded" onClick={()=>setShowBankModal(false)}>Hủy</button>
-              <button type="button" className="px-4 py-2 bg-sky-600 text-white rounded" onClick={handleAddFromBank} disabled={selectedBankQuestions.length===0}>Thêm vào đề</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showSelectQuestionModal && (
+      {showSelectQuestionModal && showView.open && showView.part && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
           <div className="relative bg-white rounded-lg shadow-lg p-8 w-full max-w-4xl relative max-h-[90vh] overflow-y-auto">
             <button
@@ -860,237 +855,73 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
             </button>
             <h2 className="text-2xl font-bold mb-4">Chọn câu hỏi cho đề thi</h2>
             <ul className="space-y-4">
-              {questions.map((q, idx) => (
+              {bankQuestions.map((q, idx) => (
                 <li key={q.id} className="border rounded p-3 bg-slate-50 flex flex-col gap-1">
                   <div className="flex items-center gap-2">
-                    <input type="checkbox" checked={tempSelectedQuestions.some(x=>x.id===q.id)} onChange={()=>{
-                      if(tempSelectedQuestions.some(x=>x.id===q.id)) setTempSelectedQuestions(tempSelectedQuestions.filter(x=>x.id!==q.id));
-                      else setTempSelectedQuestions([...tempSelectedQuestions, {...q}]);
+                    <input type="checkbox" checked={selectedBankQuestions.includes(String(q.id))} onChange={()=>{
+                      const idStr = String(q.id);
+                      setSelectedBankQuestions(sel => sel.includes(idStr) ? sel.filter(id => id !== idStr) : [...sel, idStr]);
                     }} />
                     <span className="font-semibold">{idx+1}. {q.content} <span className="ml-2 text-xs text-slate-500">({q.level})</span></span>
-                    <button className="ml-2 px-2 py-1 bg-yellow-500 text-white rounded" onClick={()=>setEditingModalQuestion(q)}>Chỉnh sửa</button>
                   </div>
-                  {editingModalQuestion && (editingModalQuestion.options || []).map((opt: any, i: number) => (
-                    <li key={i} className={opt.correct ? 'font-bold text-green-600' : ''}>
-                      {String.fromCharCode(65+i)}. {opt.text} {opt.correct ? '(Đúng)' : ''}
-                    </li>
-                  ))}
-                  {typeof editingModalQuestion?.answer === 'string' && editingModalQuestion?.answer && !editingModalQuestion?.options && (
-                    <div className="pl-8 text-green-700 font-bold">Đáp án: {editingModalQuestion?.answer}</div>
+                  {q.options && (
+                    <ul className="pl-4 text-sm">
+                      {q.options.map((opt: any, i: number) => (
+                        <li key={i} className={opt.correct ? 'text-green-600 font-bold' : ''}>
+                          {q.type !== 'truefalse' ? String.fromCharCode(65 + i) + '. ' : ''}{opt.text} {opt.correct ? '(Đúng)' : ''}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {q.answer && !q.options && (
+                    <div className="pl-4 text-green-700 font-bold">Đáp án: {q.answer}</div>
                   )}
                 </li>
               ))}
             </ul>
             <div className="flex justify-end gap-2 mt-6">
               <button type="button" className="px-4 py-2 bg-slate-200 rounded" onClick={()=>setShowSelectQuestionModal(false)}>Hủy</button>
-              <button type="button" className="px-4 py-2 bg-sky-600 text-white rounded" onClick={()=>{
-                setSelectedQuestions(tempSelectedQuestions);
+              <button type="button" className="px-4 py-2 bg-sky-600 text-white rounded" onClick={async()=>{
+                if (!showView.part) return;
+                const toAdd = bankQuestions.filter(q => selectedBankQuestions.includes(String(q.id)));
+                const newQuestions = [...(showView.part.questions || []), ...toAdd];
+                await updatePart(String(showView.part.id), { ...showView.part, questions: newQuestions });
+                setShowView({ open: true, part: { ...showView.part, questions: newQuestions } });
                 setShowSelectQuestionModal(false);
-              }}>Xác nhận chọn</button>
+              }}>Thêm vào đề</button>
             </div>
-            {editingModalQuestion && (
-              <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-                <div className="relative bg-white rounded-lg shadow-lg p-6 w-full max-w-lg">
-                  <button
-                    className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-2xl font-bold focus:outline-none"
-                    onClick={() => setEditingModalQuestion(null)}
-                    aria-label="Đóng"
-                  >
-                    ×
-                  </button>
-                  <h3 className="text-2xl font-bold mb-6 text-center">Sửa câu hỏi thủ công</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block font-medium mb-1">Nội dung câu hỏi</label>
-                      <textarea className="w-full border rounded px-3 py-2" placeholder="Nhập nội dung câu hỏi" value={editingModalQuestion.content} onChange={e=>setEditingModalQuestion({...editingModalQuestion, content: e.target.value})} required />
-                    </div>
-                    <div className="flex gap-2">
-                      <select className="px-3 py-2 border rounded" value={editingModalQuestion.type || 'truefalse'} onChange={e => {
-                        if (!editingModalQuestion) return;
-                        const t = e.target.value as 'truefalse' | 'single' | 'multiple';
-                        setEditingModalQuestion({
-                          ...editingModalQuestion,
-                          type: t,
-                          options: defaultOptions[t]
-                        });
-                      }}>
-                        <option value="truefalse">Đúng/Sai</option>
-                        <option value="single">1 đáp án đúng</option>
-                        <option value="multiple">Nhiều đáp án đúng</option>
-                      </select>
-                      <select className="px-3 py-2 border rounded" value={editingModalQuestion.level || 'easy'} onChange={e=>{
-                        if (!editingModalQuestion) return;
-                        setEditingModalQuestion({...editingModalQuestion, level: e.target.value as 'easy'|'medium'|'hard'});
-                      }}>
-                        <option value="easy">Dễ</option>
-                        <option value="medium">Trung bình</option>
-                        <option value="hard">Khó</option>
-                      </select>
-                    </div>
-                    <div className="space-y-2">
-                      {(editingModalQuestion.options || []).map((opt:any, idx:number) => (
-                        <div key={idx} className="flex items-center gap-2">
-                          {editingModalQuestion.type !== 'truefalse' && (
-                            <span className="text-slate-500">{String.fromCharCode(65 + idx)}.</span>
-                          )}
-                          <input
-                            type="text"
-                            value={opt.text}
-                            onChange={e => {
-                              const opts = [...(editingModalQuestion.options||[])];
-                              opts[idx].text = e.target.value;
-                              setEditingModalQuestion({...editingModalQuestion, options: opts});
-                            }}
-                            className="flex-1 px-3 py-2 border rounded"
-                            placeholder={editingModalQuestion.type === 'truefalse' ? (idx === 0 ? 'Đúng' : 'Sai') : 'Đáp án'}
-                            required
-                            disabled={editingModalQuestion.type === 'truefalse'}
-                          />
-                          <input
-                            type={editingModalQuestion.type === 'multiple' ? 'checkbox' : 'radio'}
-                            checked={opt.correct}
-                            onChange={() => {
-                              if (editingModalQuestion.type === 'single' || editingModalQuestion.type === 'truefalse') {
-                                setEditingModalQuestion({...editingModalQuestion, options: (editingModalQuestion.options||[]).map((o:any, i:number) => ({ ...o, correct: i === idx }))});
-                              } else {
-                                setEditingModalQuestion({...editingModalQuestion, options: (editingModalQuestion.options||[]).map((o:any, i:number) => i === idx ? { ...o, correct: !o.correct } : o)});
-                              }
-                            }}
-                            name="correct"
-                          />
-                          {editingModalQuestion.type === 'multiple' && editingModalQuestion.options.length > 2 && (
-                            <button type="button" className="text-red-500" onClick={() => {
-                              setEditingModalQuestion({...editingModalQuestion, options: (editingModalQuestion.options||[]).filter((_: any, i: number) => i !== idx)});
-                            }}>X</button>
-                          )}
-                        </div>
-                      ))}
-                      {editingModalQuestion.type === 'multiple' && (
-                        <button type="button" className="px-2 py-1 bg-slate-200 rounded" onClick={() => {
-                          setEditingModalQuestion({...editingModalQuestion, options:[...(editingModalQuestion.options||[]),{text:'',correct:false}]});
-                        }}>+ Thêm đáp án</button>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-2 mt-8">
-                    <button type="button" className="px-5 py-2 bg-slate-200 rounded font-semibold" onClick={()=>setEditingModalQuestion(null)}>Hủy</button>
-                    <button type="button" className="px-5 py-2 bg-sky-600 text-white rounded font-semibold" onClick={async()=>{
-                      if(editingModalQuestion.id && selectedBankId) {
-                        await updateQuestion(selectedBankId, editingModalQuestion.id, editingModalQuestion);
-                      }
-                      setTempSelectedQuestions(tsq=>tsq.map(q=>q.id===editingModalQuestion.id?{...editingModalQuestion}:q));
-                      setEditingModalQuestion(null);
-                    }}>Lưu</button>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       )}
 
-      {showView.open && showView.part && addingQuestion && editingQuestion && (
+      {(addingQuestion || (editingQuestion && !addingQuestion)) && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[100]">
           <div className="relative bg-white rounded-lg shadow-lg p-6 w-full max-w-lg">
             <button
               className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-2xl font-bold focus:outline-none"
-              onClick={() => {
-                setAddingQuestion(false);
-                setEditingQuestion(null);
-              }}
+              onClick={() => { setAddingQuestion(false); setEditingQuestion(null); }}
               aria-label="Đóng"
-            >
-              ×
-            </button>
-            <h3 className="text-2xl font-bold mb-6 text-center">Thêm câu hỏi thủ công</h3>
-            <form onSubmit={async e => {
-              e.preventDefault();
-              if (!editingQuestion?.content || !editingQuestion?.level) { alert('Vui lòng nhập đủ nội dung và mức độ!'); return; }
-              if (editingQuestion.type==='single' && (!editingQuestion.options || editingQuestion.options.filter((o:any)=>o.correct).length !== 1)) { alert('Phải chọn đúng 1 đáp án đúng!'); return; }
-              if (editingQuestion.type==='multiple' && (!editingQuestion.options || editingQuestion.options.filter((o:any)=>o.correct).length < 1)) { alert('Phải chọn ít nhất 1 đáp án đúng!'); return; }
-              if ((editingQuestion.type==='single' || editingQuestion.type==='multiple') && (!editingQuestion.options || editingQuestion.options.some((o:any)=>!o.text))) { alert('Vui lòng nhập đầy đủ đáp án!'); return; }
-              if (showView.open && showView.part) {
-                const newQuestions = [...(showView.part.questions || []), { ...editingQuestion, id: Date.now().toString() }];
-                await updatePart(String(showView.part.id), { ...showView.part, questions: newQuestions });
-                setShowView({ open: true, part: { ...showView.part, questions: newQuestions } });
-              }
-              setEditingQuestion(null);
-              setAddingQuestion(false);
-            }} className="space-y-4">
-              <div>
-                <label className="block font-medium mb-1">Nội dung câu hỏi</label>
-                <textarea className="w-full border rounded px-3 py-2" placeholder="Nhập nội dung câu hỏi" value={editingQuestion?.content || ''} onChange={e=>setEditingQuestion({...editingQuestion, content: e.target.value})} required />
-              </div>
-              <div className="flex gap-2">
-                <select className="px-3 py-2 border rounded" value={editingQuestion?.type || 'truefalse'} onChange={e => {
-                  if (!editingQuestion) return;
-                  const t = e.target.value as 'truefalse' | 'single' | 'multiple';
-                  setEditingQuestion({
-                    ...editingQuestion,
-                    type: t,
-                    options: defaultOptions[t]
-                  });
-                }}>
-                  <option value="truefalse">Đúng/Sai</option>
-                  <option value="single">1 đáp án đúng</option>
-                  <option value="multiple">Nhiều đáp án đúng</option>
-                </select>
-                <select className="px-3 py-2 border rounded" value={editingQuestion?.level || 'easy'} onChange={e=>{
-                  if (!editingQuestion) return;
-                  setEditingQuestion({...editingQuestion, level: e.target.value as 'easy'|'medium'|'hard'});
-                }}>
-                  <option value="easy">Dễ</option>
-                  <option value="medium">Trung bình</option>
-                  <option value="hard">Khó</option>
-                </select>
-              </div>
-              <div className="space-y-2">
-                {(editingQuestion.options || []).map((opt:any, idx:number) => (
-                  <div key={idx} className="flex items-center gap-2">
-                    {editingQuestion.type !== 'truefalse' && (
-                      <span className="text-slate-500">{String.fromCharCode(65 + idx)}.</span>
-                    )}
-                    <input
-                      type="text"
-                      value={opt.text}
-                      onChange={e => {
-                        const opts = [...(editingQuestion.options||[])];
-                        opts[idx].text = e.target.value;
-                        setEditingQuestion({...editingQuestion, options: opts});
-                      }}
-                      className="flex-1 px-3 py-2 border rounded"
-                      placeholder={editingQuestion.type === 'truefalse' ? (idx === 0 ? 'Đúng' : 'Sai') : 'Đáp án'}
-                      required
-                      disabled={editingQuestion.type === 'truefalse'}
-                    />
-                    <input
-                      type={editingQuestion.type === 'multiple' ? 'checkbox' : 'radio'}
-                      checked={opt.correct}
-                      onChange={() => {
-                        if (editingQuestion.type === 'single' || editingQuestion.type === 'truefalse') {
-                          setEditingQuestion({...editingQuestion, options: (editingQuestion.options||[]).map((o:any, i:number) => ({ ...o, correct: i === idx }))});
-                        } else {
-                          setEditingQuestion({...editingQuestion, options: (editingQuestion.options||[]).map((o:any, i:number) => i === idx ? { ...o, correct: !o.correct } : o)});
-                        }
-                      }}
-                      name="correct"
-                    />
-                    {editingQuestion.type === 'multiple' && editingQuestion.options.length > 2 && (
-                      <button type="button" className="text-red-500" onClick={() => {
-                        setEditingQuestion({...editingQuestion, options: (editingQuestion.options||[]).filter((_: any, i: number) => i !== idx)});
-                      }}>X</button>
-                    )}
-                  </div>
-                ))}
-                {editingQuestion.type === 'multiple' && (
-                  <button type="button" className="px-2 py-1 bg-slate-200 rounded" onClick={() => {
-                    setEditingQuestion({...editingQuestion, options:[...(editingQuestion.options||[]),{text:'',correct:false}]});
-                  }}>+ Thêm đáp án</button>
-                )}
-              </div>
-            </form>
+            >×</button>
+            <h3 className="text-2xl font-bold mb-6 text-center">
+              {addingQuestion ? 'Thêm câu hỏi thủ công' : 'Chỉnh sửa câu hỏi trong bài thi'}
+            </h3>
+            <QuestionForm
+              bankId={''}
+              question={editingQuestion}
+              isCustomQuestion={true}
+              onSuccess={addingQuestion ? handleAddNewQuestion : handleSaveEditQuestion}
+              onClose={() => { setAddingQuestion(false); setEditingQuestion(null); }}
+            />
           </div>
         </div>
+      )}
+
+      {questionSource === 'custom' && showImportExcel.open && (
+        <ImportQuestionExcel
+          bankId={showImportExcel.bankId || ''}
+          onSuccess={(questionsFromExcel: any) => handleImportExcel(questionsFromExcel)}
+          onClose={() => setShowImportExcel({open: false, bankId: null})}
+        />
       )}
     </div>
   );

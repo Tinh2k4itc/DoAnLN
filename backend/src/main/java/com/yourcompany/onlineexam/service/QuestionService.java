@@ -67,4 +67,28 @@ public class QuestionService {
             // log lỗi nếu cần
         }
     }
+
+    public Question update(String id, Question question) throws ExecutionException, InterruptedException {
+        Firestore db = FirestoreClient.getFirestore();
+        question.setId(id);
+        db.collection(COLLECTION_NAME).document(id).set(question);
+        // Cập nhật lại số lượng câu hỏi cho ngân hàng đề
+        try {
+            updateStats(question.getQuestionBankId());
+        } catch (Exception e) {
+            // log lỗi nếu cần
+        }
+        return question;
+    }
+
+    public Question getById(String id) throws ExecutionException, InterruptedException {
+        Firestore db = FirestoreClient.getFirestore();
+        DocumentSnapshot doc = db.collection(COLLECTION_NAME).document(id).get().get();
+        if (doc.exists()) {
+            Question question = doc.toObject(Question.class);
+            question.setId(doc.getId());
+            return question;
+        }
+        return null;
+    }
 } 

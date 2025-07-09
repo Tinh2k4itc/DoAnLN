@@ -25,11 +25,24 @@ const Dashboard: React.FC = () => {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   useEffect(() => {
-    fetchCourses().then(setCourses);
-    fetchQuestionBanks().then(setBanks);
-    fetchParts().then(setParts);
-    // Lấy tất cả câu hỏi từ tất cả ngân hàng
-    Promise.all(banks.map(b => fetchQuestions(b.id!))).then(qLists => setQuestions(qLists.flat()));
+    const loadData = async () => {
+      try {
+        const [coursesData, banksData, partsData] = await Promise.all([
+          fetchCourses(),
+          fetchQuestionBanks(),
+          fetchParts()
+        ]);
+        setCourses(coursesData);
+        setBanks(banksData);
+        setParts(partsData);
+        // Lấy tất cả câu hỏi từ tất cả ngân hàng
+        const qLists = await Promise.all(banksData.map(b => fetchQuestions(b.id!)));
+        setQuestions(qLists.flat());
+      } catch (err) {
+        console.error('Lỗi khi tải dữ liệu dashboard:', err);
+      }
+    };
+    loadData();
   }, []);
   // Thống kê
   const totalCourses = courses.length;

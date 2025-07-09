@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { createQuestion, Question } from './QuestionApi';
+import { createQuestion, Question, updateQuestion } from './QuestionApi';
+import axios from 'axios';
 
 interface Props {
   bankId: string;
-  onSuccess: () => void;
+  onSuccess?: (newQuestion: any) => void;
   onClose: () => void;
   question?: Question;
+  isCustomQuestion?: boolean;
 }
 
 const defaultOptions = {
@@ -25,7 +27,7 @@ const defaultOptions = {
   ]
 };
 
-const QuestionForm: React.FC<Props> = ({ bankId, onSuccess, onClose, question }) => {
+const QuestionForm: React.FC<Props> = ({ bankId, onSuccess, onClose, question, isCustomQuestion }) => {
   const [content, setContent] = useState(question?.content || '');
   const [type, setType] = useState<'truefalse' | 'single' | 'multiple'>(question?.type || 'truefalse');
   const [level, setLevel] = useState<'easy' | 'medium' | 'hard'>(question?.level || 'easy');
@@ -77,27 +79,35 @@ const QuestionForm: React.FC<Props> = ({ bankId, onSuccess, onClose, question })
     }
     setLoading(true);
     try {
+      let createdQuestion: any = null;
       if (question && question.id) {
-        // Gọi API update
-        await import('./QuestionApi').then(api => api.updateQuestion(bankId, question.id!, {
+        if (isCustomQuestion) {
+          createdQuestion = { ...question, content, type, level, options };
+        } else {
+          // Log id và data để kiểm tra
+          console.log('updateQuestion', question.id, { content, type, level, options, questionBankId: question.questionBankId });
+          await import('./QuestionApi').then(api => api.updateQuestion(question.id!, {
+            content,
+            type,
+            level,
+            options,
+            questionBankId: question.questionBankId
+          }));
+          createdQuestion = { ...question, content, type, level, options, questionBankId: question.questionBankId };
+        }
+      } else {
+        const bankId = question?.questionBankId || '';
+        createdQuestion = await import('./QuestionApi').then(api => api.createQuestion(bankId, {
           content,
           type,
           level,
           options,
           questionBankId: bankId
         }));
-      } else {
-        // Gọi API create
-        await createQuestion(bankId, {
-          content,
-          type,
-          level,
-          options,
-          questionBankId: bankId
-        });
       }
-      onSuccess();
-    } catch {
+      onSuccess && onSuccess(createdQuestion);
+    } catch (err) {
+      console.error('Lỗi khi lưu câu hỏi:', err);
       alert('Lỗi khi lưu câu hỏi!');
     } finally {
       setLoading(false);
@@ -108,7 +118,7 @@ const QuestionForm: React.FC<Props> = ({ bankId, onSuccess, onClose, question })
     <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-lg relative">
         <button className="absolute top-2 right-2 text-slate-400 hover:text-slate-700" onClick={onClose}>&times;</button>
-        <h2 className="text-2xl font-bold mb-4">{question ? 'Chỉnh sửa câu hỏi' : 'Thêm câu hỏi'}</h2>
+        <h2 className="text-2xl font-bold mb-4">{question ? 'Chỉnh sửa câu hỏi' : 'Chỉnh sửa câu hỏi'}</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <textarea value={content} onChange={e => setContent(e.target.value)} placeholder="Nội dung câu hỏi" className="w-full px-3 py-2 border rounded" required />
           <div className="flex gap-2">

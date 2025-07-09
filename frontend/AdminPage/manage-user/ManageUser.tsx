@@ -22,7 +22,8 @@ const ManageUser: React.FC = () => {
     try {
       const data = await fetchUsers();
       setUsers(data);
-    } catch {
+    } catch (err) {
+      console.error('Lỗi khi tải danh sách user:', err);
       alert('Lỗi khi tải danh sách user!');
     } finally {
       setLoading(false);
@@ -48,7 +49,8 @@ const ManageUser: React.FC = () => {
     try {
       await deleteUser(uid);
       await loadUsers();
-    } catch {
+    } catch (err) {
+      console.error('Lỗi khi xóa user:', err);
       alert('Lỗi khi xóa user!');
     }
   };
@@ -57,7 +59,8 @@ const ManageUser: React.FC = () => {
     try {
       await changeRole(uid, role);
       await loadUsers();
-    } catch {
+    } catch (err) {
+      console.error('Lỗi khi đổi quyền:', err);
       alert('Lỗi khi đổi quyền!');
     }
   };
@@ -66,7 +69,8 @@ const ManageUser: React.FC = () => {
     try {
       await disableUser(uid, isDeleted);
       await loadUsers();
-    } catch {
+    } catch (err) {
+      console.error('Lỗi khi vô hiệu hóa user:', err);
       alert('Lỗi khi vô hiệu hóa user!');
     }
   };
@@ -81,7 +85,8 @@ const ManageUser: React.FC = () => {
       }
       setShowForm(false);
       await loadUsers();
-    } catch {
+    } catch (err) {
+      console.error('Lỗi khi lưu user:', err);
       alert('Lỗi khi lưu user!');
     }
   };

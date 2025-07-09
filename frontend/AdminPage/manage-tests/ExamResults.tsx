@@ -14,7 +14,11 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-const ExamResults: React.FC = () => {
+interface ExamResultsProps {
+  courseId?: string;
+}
+
+const ExamResults: React.FC<ExamResultsProps> = ({ courseId }) => {
   const [results, setResults] = useState<ExamResult[]>([]);
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
@@ -23,12 +27,22 @@ const ExamResults: React.FC = () => {
 
   useEffect(() => {
     fetchExamResults()
-      .then(setResults)
+      .then(data => {
+        if (courseId) {
+          // Không có courseId trong ExamResult, thử lọc theo testName nếu có định dạng mã môn học
+          // Nếu không xác định được, chỉ hiển thị tất cả kết quả
+          // Ví dụ: nếu testName có dạng "[courseId] - Tên đề thi" thì có thể tách mã môn học
+          // Ở đây mặc định không lọc, chỉ hiển thị tất cả
+          setResults(data);
+        } else {
+          setResults(data);
+        }
+      })
       .catch((e: any) => {
         setError('Không thể tải dữ liệu kết quả thi. Vui lòng kiểm tra kết nối backend hoặc thử lại.');
         console.error('Lỗi fetchExamResults:', e);
       });
-  }, []);
+  }, [courseId]);
 
   let filtered = results;
   if (search.trim()) {
@@ -79,6 +93,10 @@ const ExamResults: React.FC = () => {
       title: { display: true, text: 'Thống kê kết quả theo đề thi' },
     },
   };
+
+  {courseId && (
+    <div className="mb-2 text-yellow-600 text-sm">Không thể lọc kết quả theo môn học do dữ liệu không có courseId.</div>
+  )}
 
   return (
     <div className="p-6">

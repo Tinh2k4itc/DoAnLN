@@ -4,7 +4,7 @@ import { createQuestion, Question } from './QuestionApi';
 
 interface Props {
   bankId: string;
-  onSuccess: () => void;
+  onSuccess?: (questionsFromExcel: any) => void;
   onClose: () => void;
 }
 
@@ -52,8 +52,9 @@ const ImportQuestionExcel: React.FC<Props> = ({ bankId, onSuccess, onClose }) =>
       for (const q of parsed) {
         await createQuestion(bankId, q);
       }
-      onSuccess();
-    } catch {
+      onSuccess && onSuccess(parsed);
+    } catch (err) {
+      console.error('Lỗi khi import câu hỏi:', err);
       alert('Lỗi khi import câu hỏi!');
     } finally {
       setLoading(false);

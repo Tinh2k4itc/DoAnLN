@@ -4,6 +4,8 @@ package com.yourcompany.onlineexam.controller;
 
 import com.yourcompany.onlineexam.model.Course;
 import com.yourcompany.onlineexam.service.CourseService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,6 +18,7 @@ import java.util.concurrent.ExecutionException;
 public class CourseController {
 
     private final CourseService courseService;
+    private static final Logger logger = LoggerFactory.getLogger(CourseController.class);
 
     public CourseController(CourseService courseService) {
         this.courseService = courseService;
@@ -26,6 +29,7 @@ public class CourseController {
         try {
             return ResponseEntity.ok(courseService.getAllCourses());
         } catch (ExecutionException | InterruptedException e) {
+            logger.error("Lỗi khi lấy danh sách courses: ", e);
             return ResponseEntity.status(500).build();
         }
     }
@@ -36,6 +40,7 @@ public class CourseController {
             Course createdCourse = courseService.createCourse(course);
             return ResponseEntity.ok(createdCourse);
         } catch (ExecutionException | InterruptedException e) {
+            logger.error("Lỗi khi tạo course: ", e);
             return ResponseEntity.status(500).build();
         }
     }
@@ -48,6 +53,7 @@ public class CourseController {
             Course updatedCourse = courseService.updateCourse(id, courseDetails);
             return ResponseEntity.ok(updatedCourse);
         } catch (ExecutionException | InterruptedException e) {
+            logger.error("Lỗi khi cập nhật course {}: ", id, e);
             return ResponseEntity.status(500).build();
         }
     }
@@ -58,6 +64,7 @@ public class CourseController {
             courseService.deleteCourse(id);
             return ResponseEntity.noContent().build();
         } catch (Exception e) {
+            logger.error("Lỗi khi xóa course {}: ", id, e);
             return ResponseEntity.status(500).build();
         }
     }
