@@ -64,5 +64,43 @@ public class CourseService {
         firestore.collection(COLLECTION_NAME).document(courseId).delete();
     }
 
+    // =================== QUẢN LÝ SINH VIÊN TRONG MÔN HỌC ===================
+    public List<String> getStudentsOfCourse(String courseId) throws ExecutionException, InterruptedException {
+        DocumentReference docRef = firestore.collection(COLLECTION_NAME).document(courseId);
+        DocumentSnapshot snapshot = docRef.get().get();
+        Course course = snapshot.toObject(Course.class);
+        if (course != null && course.getStudents() != null) {
+            return course.getStudents();
+        }
+        return new ArrayList<>();
+    }
+
+    public void addStudentToCourse(String courseId, String studentId) throws ExecutionException, InterruptedException {
+        DocumentReference docRef = firestore.collection(COLLECTION_NAME).document(courseId);
+        DocumentSnapshot snapshot = docRef.get().get();
+        Course course = snapshot.toObject(Course.class);
+        if (course == null) return;
+        List<String> students = course.getStudents();
+        if (students == null) students = new ArrayList<>();
+        if (!students.contains(studentId)) {
+            students.add(studentId);
+            course.setStudents(students);
+            docRef.set(course).get();
+        }
+    }
+
+    public void removeStudentFromCourse(String courseId, String studentId) throws ExecutionException, InterruptedException {
+        DocumentReference docRef = firestore.collection(COLLECTION_NAME).document(courseId);
+        DocumentSnapshot snapshot = docRef.get().get();
+        Course course = snapshot.toObject(Course.class);
+        if (course == null) return;
+        List<String> students = course.getStudents();
+        if (students != null && students.contains(studentId)) {
+            students.remove(studentId);
+            course.setStudents(students);
+            docRef.set(course).get();
+        }
+    }
+
     // ==========================================================
 }

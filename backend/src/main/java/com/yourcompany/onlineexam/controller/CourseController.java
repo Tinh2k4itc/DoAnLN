@@ -69,5 +69,37 @@ public class CourseController {
         }
     }
     
+    // =================== QUẢN LÝ SINH VIÊN TRONG MÔN HỌC ===================
+    @GetMapping("/{id}/students")
+    public ResponseEntity<List<String>> getStudentsOfCourse(@PathVariable String id) {
+        try {
+            return ResponseEntity.ok(courseService.getStudentsOfCourse(id));
+        } catch (ExecutionException | InterruptedException e) {
+            logger.error("Lỗi khi lấy danh sách sinh viên của course {}: ", id, e);
+            return ResponseEntity.status(500).build();
+        }
+    }
+
+    @PostMapping("/{id}/students")
+    public ResponseEntity<Void> addStudentToCourse(@PathVariable String id, @RequestBody String studentId) {
+        try {
+            courseService.addStudentToCourse(id, studentId);
+            return ResponseEntity.ok().build();
+        } catch (ExecutionException | InterruptedException e) {
+            logger.error("Lỗi khi thêm sinh viên vào course {}: ", id, e);
+            return ResponseEntity.status(500).build();
+        }
+    }
+
+    @DeleteMapping("/{id}/students/{studentId}")
+    public ResponseEntity<Void> removeStudentFromCourse(@PathVariable String id, @PathVariable String studentId) {
+        try {
+            courseService.removeStudentFromCourse(id, studentId);
+            return ResponseEntity.noContent().build();
+        } catch (ExecutionException | InterruptedException e) {
+            logger.error("Lỗi khi xóa sinh viên khỏi course {}: ", id, e);
+            return ResponseEntity.status(500).build();
+        }
+    }
     // ==========================================================
 }

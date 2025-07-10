@@ -47,6 +47,9 @@ const Sidebar: React.FC = () => {
 
   const handleItemClick = useCallback((id: string) => {
     setActiveItemId(id);
+    if (id === 'my-courses') {
+      window.dispatchEvent(new CustomEvent('user-sidebar-click', { detail: 'my-courses' }));
+    }
     // In a real app, this would trigger navigation or content update in UserForm.tsx
     console.log(`User sidebar item clicked: ${id}`);
   }, []);

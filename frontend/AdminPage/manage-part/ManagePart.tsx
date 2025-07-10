@@ -458,12 +458,12 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
                         {courses.find(c => c.id === courseId)?.name || 'Môn học hiện tại'}
                       </div>
                     ) : (
-                      <select name="courseId" value={formData.courseId} onChange={handleChange} className="w-full px-3 py-2 border rounded" required>
-                        <option value="">Chọn môn học</option>
-                        {courses.map(course => (
-                          <option key={course.id} value={course.id}>{course.name} ({course.code})</option>
-                        ))}
-                      </select>
+                    <select name="courseId" value={formData.courseId} onChange={handleChange} className="w-full px-3 py-2 border rounded" required>
+                      <option value="">Chọn môn học</option>
+                      {courses.map(course => (
+                        <option key={course.id} value={course.id}>{course.name} ({course.code})</option>
+                      ))}
+                    </select>
                     )}
                   </div>
                   <div className="space-y-2">
@@ -471,14 +471,14 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
                     <input type="number" name="maxRetake" value={formData.maxRetake ?? 1} onChange={handleChange} placeholder="Số lần thi lại tối đa" className="w-full px-3 py-2 border rounded" min={0} />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="block font-medium">Thời gian mở đề thi</label>
-                      <input type="datetime-local" name="openTime" value={formData.openTime || ''} onChange={handleChange} className="w-full px-3 py-2 border rounded" />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="block font-medium">Thời gian đóng đề thi</label>
-                      <input type="datetime-local" name="closeTime" value={formData.closeTime || ''} onChange={handleChange} className="w-full px-3 py-2 border rounded" />
-                    </div>
+                  <div className="space-y-2">
+                    <label className="block font-medium">Thời gian mở đề thi</label>
+                    <input type="datetime-local" name="openTime" value={formData.openTime || ''} onChange={handleChange} className="w-full px-3 py-2 border rounded" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block font-medium">Thời gian đóng đề thi</label>
+                    <input type="datetime-local" name="closeTime" value={formData.closeTime || ''} onChange={handleChange} className="w-full px-3 py-2 border rounded" />
+                  </div>
                   </div>
                   <div className="flex flex-wrap gap-6 items-center mt-2">
                     <label className="flex items-center gap-2">
@@ -561,8 +561,8 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
                                 setSelectedQuestions(selected);
                               }}>Chọn câu hỏi ngẫu nhiên</button>
                               <button type="button" className="ml-2 px-4 py-2 bg-blue-600 text-white rounded" onClick={()=>setShowViewQuestions(true)}>Xem câu hỏi</button>
-                            </>
-                          )}
+                    </>
+                  )}
                           {bankTab==='manual' && (
                             <>
                               <div className="mt-2">Tổng số câu đã thêm: {selectedQuestions.length}</div>
@@ -597,9 +597,9 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
                       <ul className="space-y-2 mt-2 max-h-60 overflow-y-auto">
                         {selectedQuestions.map((q, idx) => (
                           <li key={q.id || idx} className="border rounded p-3 flex flex-col gap-1">
-                            <span className="font-semibold">{idx+1}. {q.content} <span className="ml-2 text-xs text-slate-500">({q.level})</span></span>
-                          </li>
-                        ))}
+                              <span className="font-semibold">{idx+1}. {q.content} <span className="ml-2 text-xs text-slate-500">({q.level})</span></span>
+                              </li>
+                            ))}
                       </ul>
                     </>
                   )}
@@ -614,12 +614,12 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
                             type="button"
                             onClick={() => setSelectedQuestions(selectedQuestions.filter(x => x.id !== q.id))}
                           >Xóa</button>
-                        </li>
-                      ))}
-                    </ul>
+                          </li>
+                        ))}
+                      </ul>
                   </div>
                   {showViewQuestions && (
-                    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
                       <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl relative">
                         <button className="absolute top-2 right-2 text-slate-400 hover:text-slate-700 text-2xl font-bold" onClick={()=>setShowViewQuestions(false)}>&times;</button>
                         <h2 className="text-xl font-bold mb-4">Danh sách câu hỏi đã chọn</h2>
@@ -642,8 +642,8 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
                             </li>
                           ))}
                         </ul>
-                      </div>
-                    </div>
+                          </div>
+                        </div>
                   )}
                   <div className="flex justify-end gap-2 mt-4">
                     <button type="button" className="px-4 py-2 bg-slate-200 rounded" onClick={()=>setStep(1)}>Quay lại</button>
@@ -869,8 +869,8 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
                       {q.options.map((opt: any, i: number) => (
                         <li key={i} className={opt.correct ? 'text-green-600 font-bold' : ''}>
                           {q.type !== 'truefalse' ? String.fromCharCode(65 + i) + '. ' : ''}{opt.text} {opt.correct ? '(Đúng)' : ''}
-                        </li>
-                      ))}
+                    </li>
+                  ))}
                     </ul>
                   )}
                   {q.answer && !q.options && (
@@ -890,7 +890,7 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
                 setShowSelectQuestionModal(false);
               }}>Thêm vào đề</button>
             </div>
-          </div>
+                    </div>
         </div>
       )}
 
@@ -912,8 +912,8 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
               onSuccess={addingQuestion ? handleAddNewQuestion : handleSaveEditQuestion}
               onClose={() => { setAddingQuestion(false); setEditingQuestion(null); }}
             />
-          </div>
-        </div>
+              </div>
+              </div>
       )}
 
       {questionSource === 'custom' && showImportExcel.open && (

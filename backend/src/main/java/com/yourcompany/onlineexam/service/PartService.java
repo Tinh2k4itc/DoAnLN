@@ -1,6 +1,7 @@
 package com.yourcompany.onlineexam.service;
 
 import com.yourcompany.onlineexam.model.Part;
+import com.yourcompany.onlineexam.model.Question;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import com.google.firebase.cloud.FirestoreClient;
@@ -21,6 +22,31 @@ public class PartService {
         for (QueryDocumentSnapshot doc : documents) {
             Part part = doc.toObject(Part.class);
             part.setId(doc.getId());
+            if (part.getQuestions() != null) {
+                for (Part.QuestionInTest q : part.getQuestions()) {
+                    if (q.getOptions() != null) {
+                        List<Integer> correctIdxs = new ArrayList<>();
+                        int idx = 0;
+                        for (Question.Option opt : q.getOptions()) {
+                            if (opt.isCorrect()) correctIdxs.add(idx);
+                            idx++;
+                        }
+                        if (correctIdxs.size() > 1) {
+                            q.setType("multiple_choice");
+                            q.setCorrectAnswers(correctIdxs);
+                        } else if (correctIdxs.size() == 1) {
+                            q.setType("single_choice");
+                            q.setAnswer(String.valueOf(correctIdxs.get(0)));
+                            q.setCorrectAnswers(null);
+                        } else {
+                            q.setCorrectAnswers(null);
+                            System.out.println("[WARNING] Câu hỏi không có đáp án đúng: " + q.getContent());
+                        }
+                        System.out.println("[DEBUG] Question: " + q.getContent() + " | options: " + q.getOptions());
+                        System.out.println("[DEBUG] Correct answers: " + q.getCorrectAnswers() + " | answer: " + q.getAnswer());
+                    }
+                }
+            }
             parts.add(part);
         }
         return parts;
@@ -33,6 +59,31 @@ public class PartService {
         if (doc.exists()) {
             Part part = doc.toObject(Part.class);
             part.setId(doc.getId());
+            if (part.getQuestions() != null) {
+                for (Part.QuestionInTest q : part.getQuestions()) {
+                    if (q.getOptions() != null) {
+                        List<Integer> correctIdxs = new ArrayList<>();
+                        int idx = 0;
+                        for (Question.Option opt : q.getOptions()) {
+                            if (opt.isCorrect()) correctIdxs.add(idx);
+                            idx++;
+                        }
+                        if (correctIdxs.size() > 1) {
+                            q.setType("multiple_choice");
+                            q.setCorrectAnswers(correctIdxs);
+                        } else if (correctIdxs.size() == 1) {
+                            q.setType("single_choice");
+                            q.setAnswer(String.valueOf(correctIdxs.get(0)));
+                            q.setCorrectAnswers(null);
+                        } else {
+                            q.setCorrectAnswers(null);
+                            System.out.println("[WARNING] Câu hỏi không có đáp án đúng: " + q.getContent());
+                        }
+                        System.out.println("[DEBUG] Question: " + q.getContent() + " | options: " + q.getOptions());
+                        System.out.println("[DEBUG] Correct answers: " + q.getCorrectAnswers() + " | answer: " + q.getAnswer());
+                    }
+                }
+            }
             return part;
         }
         return null;

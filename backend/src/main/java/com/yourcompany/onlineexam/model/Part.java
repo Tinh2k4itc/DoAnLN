@@ -72,6 +72,7 @@ public class Part {
         private Integer score;
         private List<Question.Option> options;
         private String answer;
+        private List<Integer> correctAnswers;
 
         public QuestionInTest() {}
         public String getId() { return id; }
@@ -88,5 +89,7 @@ public class Part {
         public void setOptions(List<Question.Option> options) { this.options = options; }
         public String getAnswer() { return answer; }
         public void setAnswer(String answer) { this.answer = answer; }
+        public List<Integer> getCorrectAnswers() { return correctAnswers; }
+        public void setCorrectAnswers(List<Integer> correctAnswers) { this.correctAnswers = correctAnswers; }
     }
 } 

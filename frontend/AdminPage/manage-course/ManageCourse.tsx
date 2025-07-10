@@ -4,6 +4,7 @@ import { fetchParts, deletePart, Part } from '../manage-part/PartApi';
 import { fetchQuestionBanks, QuestionBank } from '../manage-question/QuestionBankApi';
 import ManagePart from '../manage-part/ManagePart';
 import { useNavigate } from 'react-router-dom';
+import CourseStudentManager from "./course-student/CourseStudentManager";
 
 const emptyCourse: Omit<Course, 'id'> = {
   name: '',
@@ -24,7 +25,7 @@ const ManageCourse: React.FC = () => {
   const [questionBanks, setQuestionBanks] = useState<QuestionBank[]>([]);
   const [parts, setParts] = useState<Part[]>([]);
   const [showDetail, setShowDetail] = useState<{open: boolean, course: Course|null}>({open: false, course: null});
-  const [activeTab, setActiveTab] = useState<'info'|'parts'>('info');
+  const [activeTab, setActiveTab] = useState<'info'|'parts'|'students'>('info');
   const navigate = useNavigate();
 
   const loadCourses = async () => {
@@ -258,6 +259,7 @@ const ManageCourse: React.FC = () => {
             <div className="flex gap-4 mb-4">
               <button className={`px-4 py-2 rounded ${activeTab==='info'?'bg-sky-600 text-white':'bg-slate-200'}`} onClick={()=>setActiveTab('info')}>Thông tin</button>
               <button className={`px-4 py-2 rounded ${activeTab==='parts'?'bg-sky-600 text-white':'bg-slate-200'}`} onClick={()=>setActiveTab('parts')}>Phần thi</button>
+              <button className={`px-4 py-2 rounded ${activeTab==='students'?'bg-sky-600 text-white':'bg-slate-200'}`} onClick={()=>setActiveTab('students')}>Quản lý sinh viên</button>
             </div>
             {activeTab==='info' && (
               <div>
@@ -269,6 +271,9 @@ const ManageCourse: React.FC = () => {
             )}
             {activeTab==='parts' && (
               <ManagePart courseId={showDetail.course.id} />
+            )}
+            {activeTab==='students' && showDetail.course && showDetail.course.id && (
+              <CourseStudentManager courseId={showDetail.course.id} />
             )}
           </div>
         </div>

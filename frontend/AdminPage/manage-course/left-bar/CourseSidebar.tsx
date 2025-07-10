@@ -4,6 +4,7 @@ const tabs = [
   { id: 'questions', label: 'Quản trị câu hỏi' },
   { id: 'tests', label: 'Quản trị bài thi' },
   { id: 'scores', label: 'Quản trị điểm số' },
+  { id: 'students', label: 'Quản trị sinh viên' },
 ];
 
 const CourseSidebar = ({ activeTab, onTabChange }: { activeTab: string, onTabChange: (id: string) => void }) => (

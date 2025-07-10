@@ -16,6 +16,7 @@ import {
   ClipboardDocumentListIcon,
   UserCircleIcon,
 } from './icons';
+import { useNavigate } from 'react-router-dom';
 
 export interface IconProps {
   className?: string;
@@ -39,6 +40,7 @@ const mainNavItems: SidebarItemInfo[] = [
   { id: 'dashboard', label: 'Bảng điều khiển', icon: Squares2X2Icon },
   { id: 'manage-courses', label: 'Quản lý môn học', icon: BookOpenIcon },
   { id: 'manage-users', label: 'Quản lý người dùng', icon: UsersIcon },
+  { id: 'manage-students', label: 'Quản trị sinh viên', icon: UsersIcon },
 ];
 
 const accountNavItems: SidebarItemInfo[] = [
@@ -51,11 +53,16 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItemId, onItemClick }) => {
   const [isExpanded, setIsExpanded] = useState<boolean>(true);
   const [focusSearchOnExpand, setFocusSearchOnExpand] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
 
   const handleItemClick = useCallback((id: string) => {
+    if (id === 'manage-students') {
+      navigate('/admin/manage-students');
+      return;
+    }
     onItemClick(id);
     console.log(`Sidebar item clicked: ${id}`);
-  }, [onItemClick]);
+  }, [onItemClick, navigate]);
 
   const toggleExpand = useCallback(() => {
     setIsExpanded(prev => !prev);
