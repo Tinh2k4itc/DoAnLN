@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { fetchExamResults, ExamResult } from './ExamResultApi';
 import { saveAs } from 'file-saver';
-import { Bar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,  
@@ -11,6 +10,8 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
+import { fetchUsers, User } from '../manage-user/UserApi';
+import { fetchTests, Test } from './TestApi';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -24,6 +25,8 @@ const ExamResults: React.FC<ExamResultsProps> = ({ courseId }) => {
   const [filterStatus, setFilterStatus] = useState('');
   const [showDetail, setShowDetail] = useState<ExamResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [tests, setTests] = useState<Test[]>([]);
 
   useEffect(() => {
     fetchExamResults()
@@ -42,14 +45,18 @@ const ExamResults: React.FC<ExamResultsProps> = ({ courseId }) => {
         setError('Không thể tải dữ liệu kết quả thi. Vui lòng kiểm tra kết nối backend hoặc thử lại.');
         console.error('Lỗi fetchExamResults:', e);
       });
+    fetchUsers().then(setUsers);
+    fetchTests().then(setTests);
   }, [courseId]);
 
   let filtered = results;
   if (search.trim()) {
     const keyword = search.trim().toLowerCase();
     filtered = filtered.filter(r =>
-      r.userName.toLowerCase().includes(keyword) ||
-      r.testName.toLowerCase().includes(keyword)
+      r.userName?.toLowerCase().includes(keyword) ||
+      r.userEmail?.toLowerCase().includes(keyword) ||
+      r.userStudentId?.toLowerCase().includes(keyword) ||
+      r.testName?.toLowerCase().includes(keyword)
     );
   }
   if (filterStatus) {
@@ -61,48 +68,50 @@ const ExamResults: React.FC<ExamResultsProps> = ({ courseId }) => {
   const failCount = filtered.length - passCount;
 
   const exportCSV = () => {
-    const header = 'Học sinh,Đề thi,Điểm,Thời gian nộp,Trạng thái\n';
-    const rows = filtered.map(r =>
-      [r.userName, r.testName, r.score, r.submittedAt, r.status === 'submitted' ? 'Đã nộp' : 'Chưa nộp'].join(',')
-    ).join('\n');
+    const header = 'Tên học sinh,Email,Mã sinh viên,Đề thi,Điểm,Thời gian nộp,Trạng thái,Số lần thoát màn hình\n';
+    const rows = filtered.map(r => [
+      r.userName || '',
+      r.userEmail || '',
+      r.userStudentId || '',
+      r.testName || '',
+      r.score,
+      r.submittedAt || '',
+      r.status === 'submitted' ? 'Đã nộp' : 'Chưa nộp',
+      r.leaveScreenCount || 0
+    ].join(',')).join('\n');
     const csv = header + rows;
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     saveAs(blob, 'exam_results.csv');
   };
 
   const testNames = Array.from(new Set(results.map(r => r.testName)));
-  const chartData = {
-    labels: testNames,
-    datasets: [
-      {
-        label: 'Đạt',
-        backgroundColor: 'rgba(34,197,94,0.7)',
-        data: testNames.map(name => results.filter(r => r.testName === name && r.score >= 5).length),
-      },
-      {
-        label: 'Không đạt',
-        backgroundColor: 'rgba(239,68,68,0.7)',
-        data: testNames.map(name => results.filter(r => r.testName === name && r.score < 5).length),
-      },
-    ],
-  };
-  const chartOptions = {
-    responsive: true,
-    plugins: {
-      legend: { position: 'top' as const },
-      title: { display: true, text: 'Thống kê kết quả theo đề thi' },
-    },
+
+  const getUserName = (userName: string) => {
+    // Vì ExamResult đã có userName, chỉ cần trả về trực tiếp
+    return userName;
   };
 
-  {courseId && (
-    <div className="mb-2 text-yellow-600 text-sm">Không thể lọc kết quả theo môn học do dữ liệu không có courseId.</div>
-  )}
+  const getTestName = (testName: string) => {
+    // Vì ExamResult đã có testName, chỉ cần trả về trực tiếp
+    return testName;
+  };
+
+  const getUserInfo = (result: ExamResult) => {
+    const info = [];
+    if (result.userName) info.push(result.userName);
+    if (result.userEmail) info.push(`Email: ${result.userEmail}`);
+    if (result.userStudentId) info.push(`MSSV: ${result.userStudentId}`);
+    return info.join(' | ');
+  };
 
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">Quản lý kết quả thi</h1>
       {error && <div className="mb-4 text-red-600 font-semibold">{error}</div>}
       {!error && filtered.length === 0 && <div className="mb-4 text-slate-500">Không có dữ liệu kết quả thi.</div>}
+      {courseId && (
+        <div className="mb-2 text-yellow-600 text-sm">Không thể lọc kết quả theo môn học do dữ liệu không có courseId.</div>
+      )}
       <div className="flex flex-wrap gap-4 mb-4 items-center">
         <div className="relative w-full sm:w-64">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
@@ -141,7 +150,7 @@ const ExamResults: React.FC<ExamResultsProps> = ({ courseId }) => {
         <table className="w-full border text-sm mb-6 rounded-xl shadow">
           <thead>
             <tr className="bg-slate-100">
-              <th>Học sinh</th>
+              <th>Thông tin thí sinh</th>
               <th>Đề thi</th>
               <th className="text-center">Điểm</th>
               <th>Thời gian nộp</th>
@@ -152,8 +161,12 @@ const ExamResults: React.FC<ExamResultsProps> = ({ courseId }) => {
           <tbody>
             {filtered.map(r => (
               <tr key={r.id} className="hover:bg-slate-50 transition">
-                <td>{r.userName}</td>
-                <td>{r.testName}</td>
+                <td className="max-w-xs">
+                  <div className="font-semibold">{getUserName(r.userName)}</div>
+                  {r.userEmail && <div className="text-xs text-slate-600">Email: {r.userEmail}</div>}
+                  {r.userStudentId && <div className="text-xs text-slate-600">MSSV: {r.userStudentId}</div>}
+                </td>
+                <td>{getTestName(r.testName)}</td>
                 <td className="text-center font-bold">{r.score}</td>
                 <td>{r.submittedAt ? new Date(r.submittedAt).toLocaleString() : '-'}</td>
                 <td className="text-center">
@@ -181,20 +194,23 @@ const ExamResults: React.FC<ExamResultsProps> = ({ courseId }) => {
         </table>
       </div>
       {showDetail && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-xl relative">
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white shadow-2xl w-full max-w-lg sm:max-w-xl md:max-w-2xl relative p-2 sm:p-6 md:p-8 max-h-[90vh] overflow-y-auto rounded-[20px] overflow-hidden scrollbar-none" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            <style>{`
+              .scrollbar-none::-webkit-scrollbar { display: none; }
+            `}</style>
             <button className="absolute top-2 right-2 text-slate-400 hover:text-slate-700 text-2xl font-bold" onClick={() => setShowDetail(null)}>&times;</button>
             <h2 className="text-2xl font-bold mb-4">Chi tiết bài làm: <span className="text-sky-700">{showDetail.userName}</span> - <span className="text-sky-700">{showDetail.testName}</span></h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-              <div className="bg-sky-50 rounded-lg p-4">
+              <div className="bg-sky-50 rounded-xl p-4">
                 <div className="font-semibold">Điểm:</div>
                 <div className="text-2xl font-bold text-sky-700">{showDetail.score}</div>
               </div>
-              <div className="bg-slate-50 rounded-lg p-4">
+              <div className="bg-slate-50 rounded-xl p-4">
                 <div className="font-semibold">Thời gian nộp:</div>
                 <div>{showDetail.submittedAt ? new Date(showDetail.submittedAt).toLocaleString() : '-'}</div>
               </div>
-              <div className="bg-slate-50 rounded-lg p-4">
+              <div className="bg-slate-50 rounded-xl p-4">
                 <div className="font-semibold">Trạng thái:</div>
                 <div>
                   {showDetail.status === 'submitted' ? (
@@ -210,12 +226,24 @@ const ExamResults: React.FC<ExamResultsProps> = ({ courseId }) => {
                   )}
                 </div>
               </div>
-              <div className="bg-orange-50 rounded-lg p-4">
+              <div className="bg-orange-50 rounded-xl p-4">
                 <div className="font-semibold">Số lần thoát khỏi màn hình thi:</div>
-                <div className={typeof showDetail.tabSwitchCount === 'number' && showDetail.tabSwitchCount > 0 ? 'text-orange-600 font-bold' : 'font-bold'}>
-                  {typeof showDetail.tabSwitchCount === 'number' ? showDetail.tabSwitchCount : 0}
+                <div className={(showDetail.leaveScreenCount ?? 0) > 0 ? 'text-orange-600 font-bold' : 'font-bold'}>
+                  {showDetail.leaveScreenCount ?? 0}
                 </div>
               </div>
+              {showDetail.userEmail && (
+                <div className="bg-blue-50 rounded-xl p-4">
+                  <div className="font-semibold">Email:</div>
+                  <div className="text-blue-700">{showDetail.userEmail}</div>
+                </div>
+              )}
+              {showDetail.userStudentId && (
+                <div className="bg-purple-50 rounded-xl p-4">
+                  <div className="font-semibold">Mã sinh viên:</div>
+                  <div className="text-purple-700">{showDetail.userStudentId}</div>
+                </div>
+              )}
             </div>
             <div className="font-semibold mt-4 mb-2">Chi tiết từng câu hỏi:</div>
             <ol className="list-decimal ml-6">

@@ -3,12 +3,15 @@ import axios from 'axios';
 export interface ExamResult {
   id: string;
   userName: string;
+  userEmail?: string;
+  userStudentId?: string;
   testName: string;
+  testId?: string;
   score: number;
   submittedAt: string;
   status: 'submitted' | 'not_submitted';
   details?: { question: string; answer: string; correct: boolean; point: number }[];
-  tabSwitchCount?: number;
+  leaveScreenCount?: number;
 }
 
 const API_URL = 'http://localhost:8080/api/exam-results';

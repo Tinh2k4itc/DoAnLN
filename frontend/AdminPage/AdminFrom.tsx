@@ -16,6 +16,7 @@ import { fetchQuestions, Question } from './manage-question/QuestionApi';
 import { format, isAfter, isBefore, parseISO } from 'date-fns';
 import Notification from './Notification';
 import SystemSettings from './SystemSettings';
+import AdminProfile from './AdminProfile';
 
 const Dashboard: React.FC = () => {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -137,6 +138,7 @@ const Dashboard: React.FC = () => {
 
 const AdminForm: React.FC = () => {
   const [activeSection, setActiveSection] = useState<string>('dashboard');
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState<boolean>(true);
 
   const renderActiveSection = () => {
     switch (activeSection) {
@@ -152,10 +154,12 @@ const AdminForm: React.FC = () => {
         return <ManageTests />;
       case 'exam-results':
         return <ExamResults />;
-      case 'notification':
+      case 'notifications':
         return <Notification />;
       case 'system-settings':
         return <SystemSettings />;
+      case 'admin-profile':
+        return <AdminProfile />;
       case 'manage-question-banks':
         return <ManageQuestion />;
       case 'dashboard':
@@ -165,12 +169,13 @@ const AdminForm: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen">
+    <div className="min-h-screen">
       <Sidebar 
         activeItemId={activeSection} 
         onItemClick={setActiveSection} 
+        onExpandChange={setIsSidebarExpanded}
       />
-      <main className="flex-1 p-6 lg:p-8 overflow-y-auto bg-white text-slate-800">
+      <main className={`main-content bg-slate-50 p-8 overflow-y-auto min-h-screen ${!isSidebarExpanded ? 'sidebar-collapsed' : ''}`}>
         {renderActiveSection()}
       </main>
     </div>

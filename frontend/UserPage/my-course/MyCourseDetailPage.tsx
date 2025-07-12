@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Routes, Route, Outlet, useParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Routes, Route, Outlet, useParams, useLocation, useSearchParams } from 'react-router-dom';
 import UserCourseSidebar from './left-bar/UserCourseSidebar';
 import UserCourseTests from './tests/UserCourseTests';
 import UserCourseResults from './results/UserCourseResults';
@@ -7,7 +7,16 @@ import UserForm from './user-test/UserForm';
 
 const MyCourseDetailPage: React.FC = () => {
   const { id } = useParams();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<'tests'|'results'>('tests');
+
+  // Tự động chuyển tab sang 'results' nếu path là /results hoặc có query testId
+  useEffect(() => {
+    if (location.pathname.endsWith('/results') || searchParams.get('testId')) {
+      setActiveTab('results');
+    }
+  }, [location.pathname, searchParams]);
 
   return (
     <div className="flex min-h-screen bg-slate-50">

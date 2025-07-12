@@ -34,6 +34,12 @@ interface ManagePartProps {
   courseId?: string;
 }
 
+const scoringModes = [
+  { value: 'even', label: 'Chia đều cho tất cả câu hỏi' },
+  { value: 'byDifficulty', label: 'Chia theo độ khó' },
+  { value: 'manual', label: 'Tự chỉnh điểm từng câu' },
+];
+
 const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
   const [parts, setParts] = useState<Part[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -70,6 +76,9 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
   const [bankTab, setBankTab] = useState<'auto'|'manual'>('auto');
   const [showImportExcel, setShowImportExcel] = useState<{open: boolean, bankId: string | null}>({open: false, bankId: null});
   const [showViewQuestions, setShowViewQuestions] = useState(false);
+  const [scoringMode, setScoringMode] = useState('even');
+  const [manualScores, setManualScores] = useState<any>({});
+  const [scoreError, setScoreError] = useState('');
 
   const defaultOptions = {
     truefalse: [
@@ -344,6 +353,26 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
     if (type === 'multiple') return 'Nhiều đáp án đúng';
     return type;
   };
+
+  // Thêm hàm tính điểm theo cơ chế
+  function calculateScores(questions: any[], totalScore: number, mode: string, manualScores: any = {}) {
+    if (mode === 'even') {
+      const perQ = totalScore / questions.length;
+      return questions.map(q => ({ ...q, score: perQ }));
+    }
+    if (mode === 'byDifficulty') {
+      const weights: any = { easy: 1, medium: 1.5, hard: 2 };
+      const totalWeight = questions.reduce((sum, q) => sum + (weights[q.level] || 1), 0);
+      return questions.map(q => ({
+        ...q,
+        score: totalScore * (weights[q.level] || 1) / totalWeight
+      }));
+    }
+    if (mode === 'manual') {
+      return questions.map(q => ({ ...q, score: parseFloat(manualScores[q.id]) || 0 }));
+    }
+    return questions;
+  }
 
   return (
     <div className="relative min-h-screen bg-slate-50 p-2 sm:p-6 overflow-x-auto">
@@ -669,6 +698,38 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
                       ))}
                     </ul>
                   )}
+                  <div className="mt-4 flex gap-2">
+                    <button className="px-4 py-2 bg-sky-600 text-white rounded" type="button" onClick={async () => {
+                      if (!showView.part || !showView.part.questions || showView.part.score === undefined) return;
+                      let newQuestions = showView.part.questions;
+                      if (scoringMode === 'manual') {
+                        const total = Number(Object.values(manualScores).reduce((a:any, b:any) => a + (parseFloat(b as string) || 0), 0));
+                        if (Math.abs(total - showView.part.score) > 0.01) {
+                          setScoreError(`Tổng điểm các câu hỏi (${total}) phải bằng tổng điểm bài thi (${showView.part.score})`);
+                          return;
+                        } else {
+                          setScoreError('');
+                        }
+                      }
+                      newQuestions = calculateScores(showView.part.questions || [], showView.part.score, scoringMode, manualScores);
+                      await updatePart(String(showView.part.id), { ...showView.part, questions: newQuestions, scoringMode });
+                      setShowView({ ...showView, part: { ...showView.part, questions: newQuestions, scoringMode } });
+                      alert('Cập nhật cơ chế tính điểm thành công!');
+                    }}>
+                      Lưu cơ chế tính điểm
+                    </button>
+                    <div className="flex justify-end gap-2 mt-6">
+                      <button className="px-4 py-2 bg-green-600 text-white rounded font-bold" type="button" onClick={async () => {
+                        if (!showView.part || !showView.part.questions || showView.part.score === undefined) return;
+                        const newQuestions = calculateScores(showView.part.questions, showView.part.score, scoringMode, manualScores);
+                        await updatePart(String(showView.part.id), { ...showView.part, scoringMode, questions: newQuestions });
+                        setShowView({ ...showView, part: { ...showView.part, questions: newQuestions, scoringMode } });
+                        alert('Lưu đề thi thành công!');
+                      }}>
+                        Lưu đề thi
+                      </button>
+                    </div>
+                  </div>
                   <div className="flex justify-end gap-2 mt-4">
                     <button type="button" className="px-4 py-2 bg-slate-200 rounded" onClick={()=>setStep(2)}>Quay lại</button>
                     <button type="submit" className="px-4 py-2 bg-sky-600 text-white rounded hover:bg-sky-700">Lưu bài thi</button>
@@ -770,6 +831,25 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
                 );
               })()}
             </div>
+            <div className="mb-4">
+              <label className="font-semibold mr-2">Cơ chế tính điểm:</label>
+              <select value={scoringMode} onChange={e => setScoringMode(e.target.value)} className="px-3 py-2 border rounded">
+                {scoringModes.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+              </select>
+            </div>
+            {scoringMode === 'even' && (
+              <div className="mb-2 text-green-700">Điểm mỗi câu hỏi sẽ được chia đều: {showView.part.questions && showView.part.questions.length > 0 && showView.part.score !== undefined ? (showView.part.score / showView.part.questions.length).toFixed(2) : 0} điểm/câu</div>
+            )}
+            {scoringMode === 'byDifficulty' && showView.part.score !== undefined && (
+              <div className="mb-2 text-blue-700">
+                Điểm sẽ chia theo độ khó (ví dụ: Dễ 1, Trung bình 1.5, Khó 2, chuẩn hóa tổng điểm thành {showView.part.score}).
+              </div>
+            )}
+            {scoringMode === 'manual' && showView.part.score !== undefined && (
+              <div className="mb-2 text-orange-700">Nhập điểm cho từng câu hỏi. Tổng điểm phải bằng {showView.part.score}.
+                {scoreError && <div className="text-red-600 font-semibold">{scoreError}</div>}
+              </div>
+            )}
             <div className="flex gap-4 mb-4">
               <button className="px-4 py-2 bg-green-600 text-white rounded font-semibold" type="button" onClick={()=>{ setEditingQuestion({ content: '', type: 'truefalse', level: 'easy', options: defaultOptions['truefalse'] }); setAddingQuestion(true); }}>
                 + Thêm thủ công
@@ -793,6 +873,15 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
                   <div className="text-xs text-slate-500">
                     Loại: {getTypeLabel(q.type)} | Độ khó: {q.level}
                   </div>
+                  {scoringMode === 'manual' && (
+                    <div className="mt-1">
+                      <input type="number" min={0} step={0.1} value={manualScores[q.id] ?? q.score ?? ''} onChange={e => {
+                        const val = parseFloat(e.target.value);
+                        setManualScores((s:any) => ({ ...s, [q.id]: isNaN(val) ? '' : val }));
+                      }} className="w-24 px-2 py-1 border rounded" placeholder="Điểm" />
+                      <span className="ml-2 text-xs text-slate-500">điểm</span>
+                    </div>
+                  )}
                   {q.options && (
                     <ul className="pl-4 text-sm">
                       {q.options.map((opt: any, i: number) => (
@@ -812,6 +901,17 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
                 </li>
               ))}
             </ul>
+            <div className="flex justify-end gap-2 mt-6">
+              <button className="px-4 py-2 bg-green-600 text-white rounded font-bold" type="button" onClick={async () => {
+                if (!showView.part || !showView.part.questions || showView.part.score === undefined) return;
+                const newQuestions = calculateScores(showView.part.questions, showView.part.score, scoringMode, manualScores);
+                await updatePart(String(showView.part.id), { ...showView.part, scoringMode, questions: newQuestions });
+                setShowView({ ...showView, part: { ...showView.part, questions: newQuestions, scoringMode } });
+                alert('Lưu đề thi thành công!');
+              }}>
+                Lưu đề thi
+              </button>
+            </div>
             {showBankModal && showView.open && showView.part && (
               <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
                 <div className="relative bg-white rounded-lg shadow-lg p-6 w-full max-w-md">

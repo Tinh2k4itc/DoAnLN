@@ -1,5 +1,9 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import SidebarItem from './SidebarItem';
+import { auth, storage } from '../../shared/firebase-config';
+import { updateProfile } from 'firebase/auth';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { signOut } from 'firebase/auth';
 
 export interface IconProps {
   className?: string;
@@ -26,6 +30,7 @@ import {
   Cog6ToothIcon, // Settings
   BellIcon, // Notifications
   ArrowRightOnRectangleIcon, // Logout
+  CameraIcon,
 } from './icons'; // Adjusted path
 
 const mainNavItems: SidebarItemInfo[] = [
@@ -40,23 +45,35 @@ const accountNavItems: SidebarItemInfo[] = [
   { id: 'notifications', label: 'Thông báo', icon: BellIcon },
 ];
 
-const Sidebar: React.FC = () => {
-  const [activeItemId, setActiveItemId] = useState<string>('my-courses');
+interface SidebarProps {
+  activeItemId: string;
+  onItemClick: (id: string) => void;
+  onExpandChange?: (isExpanded: boolean) => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ activeItemId, onItemClick, onExpandChange }) => {
   const [isExpanded, setIsExpanded] = useState<boolean>(true);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const handleItemClick = useCallback((id: string) => {
-    setActiveItemId(id);
+    onItemClick(id);
     if (id === 'my-courses') {
       window.dispatchEvent(new CustomEvent('user-sidebar-click', { detail: 'my-courses' }));
     }
     // In a real app, this would trigger navigation or content update in UserForm.tsx
     console.log(`User sidebar item clicked: ${id}`);
-  }, []);
+  }, [onItemClick]);
 
   const toggleExpand = useCallback(() => {
-    setIsExpanded(prev => !prev);
-  }, []);
+    setIsExpanded(prev => {
+      const newState = !prev;
+      onExpandChange?.(newState);
+      return newState;
+    });
+  }, [onExpandChange]);
   
   const [focusSearchOnExpand, setFocusSearchOnExpand] = useState(false);
   useEffect(() => {
@@ -66,8 +83,81 @@ const Sidebar: React.FC = () => {
     }
   }, [isExpanded, focusSearchOnExpand]);
 
+  // Lấy user info từ firebase auth
+  const user = auth.currentUser;
+  const userName = user?.displayName || 'User';
+  const userEmail = user?.email || 'user@example.com';
+  const userPhoto = user?.photoURL || 'https://picsum.photos/seed/user99/40/40';
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    // Kiểm tra loại file
+    if (!file.type.startsWith('image/')) {
+      setMessage({ type: 'error', text: 'Vui lòng chọn file hình ảnh!' });
+      return;
+    }
+
+    // Kiểm tra kích thước file (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setMessage({ type: 'error', text: 'Kích thước file không được vượt quá 5MB!' });
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    setMessage(null);
+
+    try {
+      // Tạo reference cho file trong storage
+      const storageRef = ref(storage, `avatars/${user.uid}/${Date.now()}_${file.name}`);
+      
+      // Upload file
+      const snapshot = await uploadBytes(storageRef, file);
+      
+      // Lấy URL download
+      const downloadURL = await getDownloadURL(snapshot.ref);
+      
+      // Cập nhật profile với avatar mới
+      await updateProfile(user, {
+        photoURL: downloadURL
+      });
+      
+      setMessage({ type: 'success', text: 'Cập nhật avatar thành công!' });
+      
+      // Tự động ẩn message sau 3 giây
+      setTimeout(() => setMessage(null), 3000);
+    } catch (error: any) {
+      console.error('Lỗi upload avatar:', error);
+      setMessage({ 
+        type: 'error', 
+        text: 'Có lỗi xảy ra khi cập nhật avatar'
+      });
+    } finally {
+      setIsUploadingAvatar(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
-    <aside className={`sidebar-transition bg-slate-900 text-slate-300 flex flex-col h-full shadow-2xl overflow-y-hidden ${isExpanded ? 'w-64 p-4' : 'w-20 md:w-24 p-3 items-center'}`}>
+    <aside className={`sidebar-transition bg-slate-900 text-slate-300 flex flex-col fixed top-0 left-0 h-screen z-50 shadow-2xl overflow-y-hidden ${isExpanded ? 'w-64 p-4' : 'w-20 md:w-24 p-3 items-center'}`}>
+      {/* Message */}
+      {message && (
+        <div className={`absolute top-4 left-4 right-4 z-50 p-3 rounded-lg flex items-center space-x-2 ${
+          message.type === 'success' 
+            ? 'bg-green-50 text-green-800 border border-green-200' 
+            : 'bg-red-50 text-red-800 border border-red-200'
+        }`}>
+          <span className="text-sm font-medium">{message.text}</span>
+        </div>
+      )}
       {/* Header */}
       <div className={`flex items-center w-full mb-5 ${isExpanded ? 'justify-between' : 'justify-center'}`}>
         <div
@@ -166,42 +256,91 @@ const Sidebar: React.FC = () => {
         {/* User Info / Logout Button */}
         <div className={`w-full ${isExpanded ? 'mt-2' : 'mt-1 md:mt-2'}`}>
           {isExpanded ? (
-            <button 
-              className="flex items-center w-full p-2.5 rounded-lg hover:bg-slate-700/60 focus-visible:bg-slate-700/60 focus:outline-none group text-left"
-              aria-label="User profile and logout"
-              onClick={() => console.log('Logout or profile action')}
-            >
-              <img
-                src="https://picsum.photos/seed/user99/40/40" // Different seed for user
-                alt="User profile picture" 
-                className="w-8 h-8 rounded-full border-2 border-slate-600 group-hover:border-sky-500 transition-colors flex-shrink-0"
-              />
-              <div className="ml-2.5 flex-grow overflow-hidden">
-                <p className="text-sm font-semibold text-slate-100 truncate">User</p>
-                <p className="text-xs text-slate-400 truncate">user@example.com</p>
+            <div className="flex items-center w-full p-2.5 rounded-lg group text-left">
+              <div className="relative group/avatar">
+                <img
+                  src={userPhoto}
+                  alt="User profile picture" 
+                  className="w-8 h-8 rounded-full border-2 border-slate-600 group-hover:border-sky-500 transition-colors flex-shrink-0"
+                />
+                
+                {/* Overlay với nút upload */}
+                <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover/avatar:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                  <button
+                    onClick={triggerFileInput}
+                    disabled={isUploadingAvatar}
+                    className="p-1 bg-white/20 rounded-full hover:bg-white/30 transition-colors disabled:opacity-50"
+                    title="Thay đổi avatar"
+                  >
+                    {isUploadingAvatar ? (
+                      <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <CameraIcon className="w-3 h-3 text-white" />
+                    )}
+                  </button>
+                </div>
               </div>
-              <ArrowRightOnRectangleIcon className="w-5 h-5 text-slate-400 group-hover:text-red-400 transition-colors ml-2 flex-shrink-0" />
-            </button>
+              
+              <div className="ml-2.5 flex-grow overflow-hidden">
+                <p className="text-sm font-semibold text-slate-100 truncate">{userName}</p>
+                <p className="text-xs text-slate-400 truncate">{userEmail}</p>
+              </div>
+              
+              <button
+                className="ml-2 flex-shrink-0 text-slate-400 hover:text-red-400 transition-colors"
+                aria-label="Đăng xuất"
+                onClick={async () => {
+                  if (window.confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+                    await signOut(auth);
+                    console.log('Đã đăng xuất!');
+                  }
+                }}
+              >
+                <ArrowRightOnRectangleIcon className="w-5 h-5" />
+              </button>
+            </div>
           ) : (
             <div className="relative group flex justify-center">
-              <button 
-                aria-label="User Profile"
-                className="focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded-full p-0.5"
-                onClick={() => console.log('Profile action collapsed')}
-              >
+              <div className="relative group/avatar">
                 <img
-                  src="https://picsum.photos/seed/user99/40/40"
+                  src={userPhoto}
                   alt="User Profile"
                   className="w-8 h-8 md:w-9 md:h-9 rounded-full border-2 border-slate-600 group-hover:border-sky-500 transition-colors"
                 />
-              </button>
+                
+                {/* Overlay với nút upload cho collapsed mode */}
+                <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover/avatar:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                  <button
+                    onClick={triggerFileInput}
+                    disabled={isUploadingAvatar}
+                    className="p-1 bg-white/20 rounded-full hover:bg-white/30 transition-colors disabled:opacity-50"
+                    title="Thay đổi avatar"
+                  >
+                    {isUploadingAvatar ? (
+                      <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <CameraIcon className="w-3 h-3 text-white" />
+                    )}
+                  </button>
+                </div>
+              </div>
+              
               <div className="absolute left-full ml-3 px-3 py-2 text-sm font-medium text-white bg-slate-800/95 backdrop-blur-sm rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none transform translate-x-[-8px] group-hover:translate-x-0 z-50" role="tooltip">
-                User
+                {userName}
                 <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-800/95 transform rotate-45"></div>
               </div>
             </div>
           )}
         </div>
+        
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleAvatarUpload}
+          className="hidden"
+        />
       </div>
     </aside>
   );

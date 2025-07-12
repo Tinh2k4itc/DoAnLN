@@ -13,12 +13,13 @@ public class Part {
     private Date createdAt;
     private Date updatedAt;
     private List<QuestionInTest> questions;
-    private Integer score;
+    private Double score;
     private Integer maxRetake;
     private Boolean randomizeQuestions;
     private Boolean enableAntiCheat;
     private Boolean enableTabWarning;
     private Boolean showAnswerAfterSubmit;
+    private String scoringMode;
 
     public Part() {}
 
@@ -46,8 +47,8 @@ public class Part {
     public List<QuestionInTest> getQuestions() { return questions; }
     public void setQuestions(List<QuestionInTest> questions) { this.questions = questions; }
 
-    public Integer getScore() { return score; }
-    public void setScore(Integer score) { this.score = score; }
+    public Double getScore() { return score; }
+    public void setScore(Double score) { this.score = score; }
 
     public Integer getMaxRetake() { return maxRetake; }
     public void setMaxRetake(Integer maxRetake) { this.maxRetake = maxRetake; }
@@ -64,12 +65,15 @@ public class Part {
     public Boolean getShowAnswerAfterSubmit() { return showAnswerAfterSubmit; }
     public void setShowAnswerAfterSubmit(Boolean showAnswerAfterSubmit) { this.showAnswerAfterSubmit = showAnswerAfterSubmit; }
 
+    public String getScoringMode() { return scoringMode; }
+    public void setScoringMode(String scoringMode) { this.scoringMode = scoringMode; }
+
     public static class QuestionInTest {
         private String id;
         private String content;
         private String type;
         private String level;
-        private Integer score;
+        private Double score;
         private List<Question.Option> options;
         private String answer;
         private List<Integer> correctAnswers;
@@ -83,8 +87,8 @@ public class Part {
         public void setType(String type) { this.type = type; }
         public String getLevel() { return level; }
         public void setLevel(String level) { this.level = level; }
-        public Integer getScore() { return score; }
-        public void setScore(Integer score) { this.score = score; }
+        public Double getScore() { return score; }
+        public void setScore(Double score) { this.score = score; }
         public List<Question.Option> getOptions() { return options; }
         public void setOptions(List<Question.Option> options) { this.options = options; }
         public String getAnswer() { return answer; }

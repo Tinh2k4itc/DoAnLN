@@ -19,6 +19,7 @@ export interface Part {
   closeTime?: string | null;
   showAnswerAfterSubmit?: boolean;
   courseName?: string;
+  scoringMode?: string;
 }
 
 const API_URL = 'http://localhost:8080/api/parts';
