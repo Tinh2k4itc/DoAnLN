@@ -195,6 +195,7 @@ const UserForm: React.FC<UserFormProps> = ({ partId, onBack }) => {
         status: 'submitted',
         details: detailsPayload,
         leaveScreenCount,
+        userId: user?.uid,
     };
 
     try {

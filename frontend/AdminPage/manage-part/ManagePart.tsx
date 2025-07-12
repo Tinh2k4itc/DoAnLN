@@ -150,9 +150,12 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
       randomizeQuestions: part.randomizeQuestions,
       enableAntiCheat: part.enableAntiCheat,
       enableTabWarning: part.enableTabWarning,
-      openTime: part.openTime || '',
-      closeTime: part.closeTime || '',
-      showAnswerAfterSubmit: part.showAnswerAfterSubmit ?? false
+      openTime: part.openTime ? new Date(part.openTime).toISOString().slice(0, 16) : '',
+      closeTime: part.closeTime ? new Date(part.closeTime).toISOString().slice(0, 16) : '',
+      showAnswerAfterSubmit: part.showAnswerAfterSubmit ?? false,
+      questions: part.questions || [],
+      score: part.score,
+      scoringMode: part.scoringMode,
     });
     setShowEdit(true);
   };
@@ -245,7 +248,15 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
       answer: q.answer
     }));
     try {
-      await createPart({ ...formData, questions: questionsToSave, score: scoreMode==='total' ? totalScore : questionsToSave.reduce((a,b)=>a+b.score,0) });
+      const payload = {
+        ...formData,
+        openTime: formData.openTime ? new Date(formData.openTime).toISOString() : '',
+        closeTime: formData.closeTime ? new Date(formData.closeTime).toISOString() : '',
+        questions: questionsToSave,
+        score: scoreMode==='total' ? totalScore : questionsToSave.reduce((a,b)=>a+b.score,0),
+        showAnswerAfterSubmit: formData.showAnswerAfterSubmit
+      };
+      await createPart(payload);
       setShowCreate(false);
       setStep(1);
       setSelectedQuestions([]);
@@ -268,7 +279,12 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
       return;
     }
     try {
-      await updatePart(editId, formData);
+      const payload = {
+        ...formData,
+        openTime: formData.openTime ? new Date(formData.openTime).toISOString() : '',
+        closeTime: formData.closeTime ? new Date(formData.closeTime).toISOString() : '',
+      };
+      await updatePart(editId, payload);
       setShowEdit(false);
       setEditId(undefined);
       await loadData();
@@ -502,11 +518,23 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="block font-medium">Thời gian mở đề thi</label>
-                    <input type="datetime-local" name="openTime" value={formData.openTime || ''} onChange={handleChange} className="w-full px-3 py-2 border rounded" />
+                    <input
+                      type="datetime-local"
+                      name="openTime"
+                      value={formData.openTime ? formData.openTime.slice(0, 16) : ''}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border rounded"
+                    />
                   </div>
                   <div className="space-y-2">
                     <label className="block font-medium">Thời gian đóng đề thi</label>
-                    <input type="datetime-local" name="closeTime" value={formData.closeTime || ''} onChange={handleChange} className="w-full px-3 py-2 border rounded" />
+                    <input
+                      type="datetime-local"
+                      name="closeTime"
+                      value={formData.closeTime ? formData.closeTime.slice(0, 16) : ''}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border rounded"
+                    />
                   </div>
                   </div>
                   <div className="flex flex-wrap gap-6 items-center mt-2">
@@ -523,14 +551,15 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
                       Cảnh báo chuyển tab
                     </label>
                   </div>
-                  <div className="flex items-center gap-2 mt-2">
+                  <div className="flex items-center mt-2">
                     <input
                       type="checkbox"
-                      name="showAnswerAfterSubmit"
+                      id="showAnswerAfterSubmit"
                       checked={!!formData.showAnswerAfterSubmit}
                       onChange={e => setFormData(f => ({ ...f, showAnswerAfterSubmit: e.target.checked }))}
+                      className="mr-2"
                     />
-                    <label className="font-medium" htmlFor="showAnswerAfterSubmit">Hiển thị đáp án sau khi nộp bài</label>
+                    <label htmlFor="showAnswerAfterSubmit">Hiển thị đáp án sau khi nộp bài</label>
                   </div>
                   <div className="flex justify-end gap-2 mt-4">
                     <button type="button" className="px-4 py-2 bg-sky-600 text-white rounded" onClick={() => setStep(2)} disabled={!formData.name || (!formData.courseId && !courseId)}>
@@ -772,11 +801,23 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
               <input type="number" name="maxRetake" value={formData.maxRetake ?? 1} onChange={handleChange} placeholder="Số lần thi lại tối đa" className="w-full px-3 py-2 border rounded" min={0} />
               <div className="space-y-2">
                 <label className="block font-medium">Thời gian mở đề thi</label>
-                <input type="datetime-local" name="openTime" value={formData.openTime || ''} onChange={handleChange} className="w-full px-3 py-2 border rounded" />
+                <input
+                  type="datetime-local"
+                  name="openTime"
+                  value={formData.openTime ? formData.openTime.slice(0, 16) : ''}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border rounded"
+                />
               </div>
               <div className="space-y-2">
                 <label className="block font-medium">Thời gian đóng đề thi</label>
-                <input type="datetime-local" name="closeTime" value={formData.closeTime || ''} onChange={handleChange} className="w-full px-3 py-2 border rounded" />
+                <input
+                  type="datetime-local"
+                  name="closeTime"
+                  value={formData.closeTime ? formData.closeTime.slice(0, 16) : ''}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border rounded"
+                />
               </div>
               <div className="flex gap-4 items-center mt-2">
                 <label className="flex items-center gap-2">
@@ -791,6 +832,16 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
                   <input type="checkbox" name="enableTabWarning" checked={!!formData.enableTabWarning} onChange={e => setFormData(f => ({ ...f, enableTabWarning: e.target.checked }))} />
                   Cảnh báo chuyển tab
                 </label>
+              </div>
+              <div className="flex items-center mt-2">
+                <input
+                  type="checkbox"
+                  id="showAnswerAfterSubmit"
+                  checked={!!formData.showAnswerAfterSubmit}
+                  onChange={e => setFormData(f => ({ ...f, showAnswerAfterSubmit: e.target.checked }))}
+                  className="mr-2"
+                />
+                <label htmlFor="showAnswerAfterSubmit">Hiển thị đáp án sau khi nộp bài</label>
               </div>
               <div className="flex justify-end gap-2">
                 <button type="button" className="px-4 py-2 bg-slate-200 rounded" onClick={() => setShowEdit(false)}>Hủy</button>

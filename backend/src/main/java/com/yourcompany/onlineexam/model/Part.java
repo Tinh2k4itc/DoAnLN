@@ -12,6 +12,8 @@ public class Part {
     private String courseId;
     private Date createdAt;
     private Date updatedAt;
+    private Date openTime;  // Thời gian mở đề thi
+    private Date closeTime; // Thời gian đóng đề thi
     private List<QuestionInTest> questions;
     private Double score;
     private Integer maxRetake;
@@ -43,6 +45,12 @@ public class Part {
 
     public Date getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Date updatedAt) { this.updatedAt = updatedAt; }
+
+    public Date getOpenTime() { return openTime; }
+    public void setOpenTime(Date openTime) { this.openTime = openTime; }
+
+    public Date getCloseTime() { return closeTime; }
+    public void setCloseTime(Date closeTime) { this.closeTime = closeTime; }
 
     public List<QuestionInTest> getQuestions() { return questions; }
     public void setQuestions(List<QuestionInTest> questions) { this.questions = questions; }

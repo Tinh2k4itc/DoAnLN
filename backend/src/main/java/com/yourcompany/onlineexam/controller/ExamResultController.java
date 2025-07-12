@@ -56,10 +56,10 @@ public class ExamResultController {
         }
     }
 
-    @GetMapping("/attempt-count/{userName}/{testName}")
-    public ResponseEntity<Integer> getAttemptCount(@PathVariable String userName, @PathVariable String testName) {
+    @GetMapping("/attempt-count/{userId}/{testId}")
+    public ResponseEntity<Integer> getAttemptCount(@PathVariable String userId, @PathVariable String testId) {
         try {
-            int attemptCount = examResultService.getAttemptCount(userName, testName);
+            int attemptCount = examResultService.getAttemptCountByUserId(userId, testId);
             return ResponseEntity.ok(attemptCount);
         } catch (Exception e) {
             logger.error("Lỗi khi lấy số lượt thi: ", e);
@@ -67,13 +67,35 @@ public class ExamResultController {
         }
     }
 
-    @GetMapping("/can-take-test/{userName}/{testName}/{maxRetake}")
-    public ResponseEntity<Boolean> canTakeTest(@PathVariable String userName, @PathVariable String testName, @PathVariable int maxRetake) {
+    @GetMapping("/can-take-test/{userId}/{testId}/{maxRetake}")
+    public ResponseEntity<Boolean> canTakeTest(@PathVariable String userId, @PathVariable String testId, @PathVariable int maxRetake) {
         try {
-            boolean canTake = examResultService.canTakeTest(userName, testName, maxRetake);
+            boolean canTake = examResultService.canTakeTestByUserId(userId, testId, maxRetake);
             return ResponseEntity.ok(canTake);
         } catch (Exception e) {
             logger.error("Lỗi khi kiểm tra quyền thi: ", e);
+            return ResponseEntity.status(500).build();
+        }
+    }
+
+    @GetMapping("/attempt-count-by-user/{userId}/{testId}")
+    public ResponseEntity<Integer> getAttemptCountByUserId(@PathVariable String userId, @PathVariable String testId) {
+        try {
+            int attemptCount = examResultService.getAttemptCountByUserId(userId, testId);
+            return ResponseEntity.ok(attemptCount);
+        } catch (Exception e) {
+            logger.error("Lỗi khi lấy số lượt thi theo userId: ", e);
+            return ResponseEntity.status(500).build();
+        }
+    }
+
+    @GetMapping("/can-take-test-by-user/{userId}/{testId}/{maxRetake}")
+    public ResponseEntity<Boolean> canTakeTestByUserId(@PathVariable String userId, @PathVariable String testId, @PathVariable int maxRetake) {
+        try {
+            boolean canTake = examResultService.canTakeTestByUserId(userId, testId, maxRetake);
+            return ResponseEntity.ok(canTake);
+        } catch (Exception e) {
+            logger.error("Lỗi khi kiểm tra quyền thi theo userId: ", e);
             return ResponseEntity.status(500).build();
         }
     }

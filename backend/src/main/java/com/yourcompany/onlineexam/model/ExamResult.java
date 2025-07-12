@@ -14,6 +14,7 @@ public class ExamResult {
     private String status; // 'submitted' | 'not_submitted'
     private List<Detail> details;
     private int leaveScreenCount;
+    private String userId;
 
     public static class Detail {
         private String questionId;
@@ -61,4 +62,6 @@ public class ExamResult {
     public void setDetails(List<Detail> details) { this.details = details; }
     public int getLeaveScreenCount() { return leaveScreenCount; }
     public void setLeaveScreenCount(int leaveScreenCount) { this.leaveScreenCount = leaveScreenCount; }
+    public String getUserId() { return userId; }
+    public void setUserId(String userId) { this.userId = userId; }
 }

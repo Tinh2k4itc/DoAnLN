@@ -6,14 +6,16 @@ import {
   CategoryScale,  
   LinearScale,
   BarElement,
+  ArcElement,
   Title,
   Tooltip,
   Legend,
 } from 'chart.js';
 import { fetchUsers, User } from '../manage-user/UserApi';
 import { fetchTests, Test } from './TestApi';
+import { Bar, Pie } from 'react-chartjs-2';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend);
 
 interface ExamResultsProps {
   courseId?: string;
@@ -104,14 +106,92 @@ const ExamResults: React.FC<ExamResultsProps> = ({ courseId }) => {
     return info.join(' | ');
   };
 
+  // Phổ điểm dạng histogram chia nhỏ mỗi 0.25 điểm
+  const binSize = 0.25;
+  const minScore = 0;
+  const maxScore = 10;
+  const binCount = Math.ceil((maxScore - minScore) / binSize) + 1;
+  const scoreLabels = Array.from({ length: binCount }, (_, i) => (minScore + i * binSize).toFixed(2));
+  const scoreDistribution = Array(binCount).fill(0);
+
+  filtered.forEach(r => {
+    let idx = Math.round((r.score - minScore) / binSize);
+    if (idx < 0) idx = 0;
+    if (idx >= binCount) idx = binCount - 1;
+    scoreDistribution[idx]++;
+  });
+
+  const barData = {
+    labels: scoreLabels,
+    datasets: [
+      {
+        label: 'Số lượng thí sinh',
+        data: scoreDistribution,
+        backgroundColor: 'rgba(54, 162, 235, 0.8)',
+        borderRadius: 2,
+        barPercentage: 1.0,
+        categoryPercentage: 1.0,
+      },
+    ],
+  };
+
+  // Pie chart đạt/không đạt
+  const pieData = {
+    labels: ['Đạt', 'Không đạt'],
+    datasets: [
+      {
+        data: [passCount, failCount],
+        backgroundColor: ['#4ade80', '#f87171'],
+      },
+    ],
+  };
+
+  // Thống kê đúng/sai từng câu hỏi
+  const questionStats: Record<string, { correct: number; wrong: number; content: string }> = {};
+  filtered.forEach(result => {
+    result.details?.forEach((detail: any) => {
+      const qid = detail.questionId;
+      if (!questionStats[qid]) {
+        questionStats[qid] = { correct: 0, wrong: 0, content: detail.question };
+      }
+      if (detail.correct) questionStats[qid].correct += 1;
+      else questionStats[qid].wrong += 1;
+    });
+  });
+  const questionLabels = Object.values(questionStats).map(q => q.content);
+  const correctRates = Object.values(questionStats).map(q => {
+    const total = q.correct + q.wrong;
+    return total ? Math.round((q.correct / total) * 100) : 0;
+  });
+  const wrongRates = Object.values(questionStats).map(q => {
+    const total = q.correct + q.wrong;
+    return total ? Math.round((q.wrong / total) * 100) : 0;
+  });
+  const questionBarData = {
+    labels: questionLabels,
+    datasets: [
+      {
+        label: 'Tỉ lệ đúng (%)',
+        data: correctRates,
+        backgroundColor: '#4ade80',
+      },
+      {
+        label: 'Tỉ lệ sai (%)',
+        data: wrongRates,
+        backgroundColor: '#f87171',
+      },
+    ],
+  };
+
+  // Câu hỏi đúng/sai nhiều nhất
+  const mostCorrect = Object.values(questionStats).reduce((max, q) => q.correct > max.correct ? q : max, {correct: 0, wrong: 0, content: ''});
+  const mostWrong = Object.values(questionStats).reduce((max, q) => q.wrong > max.wrong ? q : max, {correct: 0, wrong: 0, content: ''});
+
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">Quản lý kết quả thi</h1>
       {error && <div className="mb-4 text-red-600 font-semibold">{error}</div>}
       {!error && filtered.length === 0 && <div className="mb-4 text-slate-500">Không có dữ liệu kết quả thi.</div>}
-      {courseId && (
-        <div className="mb-2 text-yellow-600 text-sm">Không thể lọc kết quả theo môn học do dữ liệu không có courseId.</div>
-      )}
       <div className="flex flex-wrap gap-4 mb-4 items-center">
         <div className="relative w-full sm:w-64">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
@@ -140,10 +220,62 @@ const ExamResults: React.FC<ExamResultsProps> = ({ courseId }) => {
           <span>Không đạt: <span className="font-bold">{failCount}</span></span>
         </div>
       </div>
-      <div className="mb-8">
-        {/* <Bar data={chartData} options={chartOptions} /> */}
-        <div style={{height: 300, background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontWeight: 'bold', fontSize: 18}}>
-          Biểu đồ sẽ hiển thị ở đây
+      <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div>
+          <h3 className="font-semibold mb-2">Phổ điểm</h3>
+          <Bar
+            data={barData}
+            options={{
+              plugins: {
+                legend: { display: false },
+                tooltip: { enabled: true },
+              },
+              scales: {
+                x: {
+                  title: { display: true, text: 'Điểm' },
+                  ticks: { maxRotation: 90, minRotation: 90, autoSkip: false, font: { size: 10 } },
+                },
+                y: {
+                  title: { display: true, text: 'Số lượng thí sinh' },
+                  beginAtZero: true,
+                },
+              },
+            }}
+          />
+        </div>
+        <div>
+          <h3 className="font-semibold mb-2">Tỉ lệ đạt/không đạt</h3>
+          <div style={{ maxWidth: 350, margin: '0 auto' }}>
+            <Pie data={pieData} />
+          </div>
+        </div>
+        <div className="md:col-span-2">
+          <h3 className="font-semibold mb-2">Tỉ lệ đúng/sai từng câu hỏi</h3>
+          <Bar data={questionBarData} options={{ indexAxis: 'y' }} />
+        </div>
+        <div className="md:col-span-2">
+          <h3 className="font-semibold mb-2">Câu hỏi làm đúng/sai nhiều nhất</h3>
+          <table className="w-full border text-sm rounded-xl shadow">
+            <thead>
+              <tr className="bg-slate-100">
+                <th>Câu hỏi</th>
+                <th>Làm đúng</th>
+                <th>Làm sai</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="font-semibold">{mostCorrect.content}</td>
+                <td className="text-green-600 font-bold">{mostCorrect.correct}</td>
+                <td>{mostCorrect.wrong}</td>
+              </tr>
+              <tr>
+                <td className="font-semibold">{mostWrong.content}</td>
+                <td>{mostWrong.correct}</td>
+                <td className="text-red-600 font-bold">{mostWrong.wrong}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
       <div className="overflow-x-auto">

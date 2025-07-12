@@ -23,8 +23,12 @@ const UserCourseResults: React.FC<{ courseId: string }> = ({ courseId }) => {
       const res = await axios.get('http://localhost:8080/api/exam-results');
       const partRes = await axios.get('http://localhost:8080/api/parts');
       setParts(partRes.data);
-      // Lọc kết quả của user hiện tại và các bài thi thuộc courseId
-      const myResults = res.data.filter((r:any) => r.userName === (user?.uid || user?.email) && partRes.data.some((p:any) => p.id === r.testName && p.courseId === courseId));
+      // Lọc kết quả của user theo userEmail và chỉ hiển thị nếu part cho phép xem lại đáp án
+      const myResults = res.data.filter((r:any) => {
+        if (r.userEmail !== user?.email) return false;
+        const part = partRes.data.find((p:any) => p.id === r.testId);
+        return part && part.showAnswerAfterSubmit;
+      });
       setResults(myResults);
       setFilteredResults(myResults);
     };
@@ -36,7 +40,7 @@ const UserCourseResults: React.FC<{ courseId: string }> = ({ courseId }) => {
     const testId = searchParams.get('testId');
     if (testId) {
       setSelectedTestId(testId);
-      const filtered = results.filter((r: any) => r.testName === testId);
+      const filtered = results.filter((r: any) => r.testId === testId);
       setFilteredResults(filtered);
     } else {
       setFilteredResults(results);
@@ -50,13 +54,13 @@ const UserCourseResults: React.FC<{ courseId: string }> = ({ courseId }) => {
     if (testId === '') {
       setFilteredResults(results);
     } else {
-      const filtered = results.filter((r: any) => r.testName === testId);
+      const filtered = results.filter((r: any) => r.testId === testId);
       setFilteredResults(filtered);
     }
   };
 
   const getUniqueTests = () => {
-    const testIds = [...new Set(results.map((r: any) => r.testName))];
+    const testIds = [...new Set(results.map((r: any) => r.testId))];
     return testIds.map(testId => ({
       id: testId,
       name: getPart(testId)?.name || 'Bài thi không xác định'
@@ -116,7 +120,7 @@ const UserCourseResults: React.FC<{ courseId: string }> = ({ courseId }) => {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {filteredResults.map((r, idx) => {
-            const part = getPart(r.testName);
+            const part = getPart(r.testId);
             const correctCount = r.details.filter((d: any) => d.correct).length;
             const incorrectCount = r.details.filter((d: any) => !d.correct).length;
             const totalScore = part?.score || r.details.length;
@@ -125,7 +129,7 @@ const UserCourseResults: React.FC<{ courseId: string }> = ({ courseId }) => {
               <div key={idx} className="bg-white rounded-xl shadow-md p-6 cursor-pointer hover:shadow-lg border border-slate-200 transition-shadow" onClick={() => setShowDetail({result: r, part})}>
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
-                    <h3 className="font-bold text-lg text-slate-800 mb-1">{part?.name || 'Bài thi'}</h3>
+                    <h3 className="font-bold text-lg text-slate-800 mb-1">{r.testName || part?.name || 'Bài thi'}</h3>
                     <p className="text-slate-500 text-sm">
                       Nộp lúc: {new Date(r.submittedAt).toLocaleString('vi-VN')}
                     </p>
@@ -167,43 +171,37 @@ const UserCourseResults: React.FC<{ courseId: string }> = ({ courseId }) => {
           <div className="bg-white rounded-xl shadow p-4 sm:p-8 w-full max-w-md sm:max-w-2xl text-left relative overflow-y-auto max-h-[90vh]">
             <button className="absolute top-2 right-2 text-slate-400 hover:text-red-500 text-2xl font-bold" onClick={()=>setShowDetail(null)}>&times;</button>
             <h2 className="text-2xl font-bold mb-2">Chi tiết kết quả</h2>
-            <div className="mb-2 font-semibold">{showDetail.part?.name || 'Bài thi'}</div>
+            <div className="mb-2 font-semibold">{showDetail.result.testName || showDetail.part?.name || 'Bài thi'}</div>
             <div className="mb-2">Điểm: <span className="font-bold text-green-600">{showDetail.result.score}</span> / {showDetail.part?.score || showDetail.result.score}</div>
             <div className="mb-2">Số câu đúng: <span className="font-bold">{showDetail.result.details.filter((d:any) => d.correct).length}</span></div>
             <div className="mb-2">Số câu sai: <span className="font-bold text-red-600">{showDetail.result.details.length - showDetail.result.details.filter((d:any) => d.correct).length}</span></div>
             <div className="mb-2">Thời gian nộp: {new Date(showDetail.result.submittedAt).toLocaleString('vi-VN', { hour12: false })}</div>
-            {showDetail.part?.showAnswerAfterSubmit ? (
-              <div className="mt-6">
-                <h3 className="font-bold mb-2">Chi tiết từng câu hỏi</h3>
-                {showDetail.result.details.map((d:any, idx:number) => {
-                  const q = showDetail.part?.questions?.find((qq:any) => qq.id === d.questionId) || showDetail.part?.questions?.[idx];
-                  let isCorrect = d.correct;
-                  // Ưu tiên hiển thị trường answer nếu có
-                  let userAnswer = d.answer || '';
-                  if (!userAnswer && q && q.options && d.optionIds) {
-                    const userOptionIds = d.optionIds.split(',');
-                    userAnswer = userOptionIds.map((oid:string) => {
-                      const opt = q.options.find((o:any) => o.id === oid);
-                      return opt ? opt.text : '';
-                    }).filter(Boolean).join(', ');
-                  }
-                  if (!userAnswer) userAnswer = 'Không trả lời';
-                  return (
-                    <div key={idx} className="mb-4 p-3 rounded border bg-slate-50">
-                      <div className="font-semibold mb-1">Câu {idx+1}: {q?.content}</div>
-                      <div className="mb-1">Đáp án của bạn: <span className={isCorrect ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>{userAnswer}</span></div>
-                      <div>Đáp án đúng: <span className="text-green-700 font-bold">{q && q.options
-                        ? (Array.isArray(q.correctAnswers) && q.correctAnswers.length > 0
-                            ? q.correctAnswers.map((idx2:number) => q.options?.[Number(idx2)]?.text || '').join(', ')
-                            : q.options?.[Number(q.answer)]?.text)
-                        : (q?.answer || '')}</span></div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="mt-8 text-center text-slate-500">Bạn không được phép xem lại đáp án sau khi nộp bài.</div>
-            )}
+            {/* Luôn hiển thị chi tiết từng câu hỏi sau khi làm bài */}
+            <div className="mt-6">
+              <h3 className="font-bold mb-2">Chi tiết từng câu hỏi</h3>
+              {showDetail.result.details.map((d:any, idx:number) => {
+                const q = showDetail.part?.questions?.find((qq:any) => qq.id === d.questionId) || showDetail.part?.questions?.[idx];
+                const questionContent = q?.content || d.question || `Câu hỏi ${idx+1}`;
+                let isCorrect = d.correct;
+                // Ưu tiên hiển thị trường answer nếu có
+                let userAnswer = d.answer || '';
+                if (!userAnswer && q && q.options && d.optionIds) {
+                  const userOptionIds = d.optionIds.split(',');
+                  userAnswer = userOptionIds.map((oid:string) => {
+                    const opt = q.options.find((o:any) => o.id === oid);
+                    return opt ? opt.text : '';
+                  }).filter(Boolean).join(', ');
+                }
+                if (!userAnswer) userAnswer = 'Không trả lời';
+                return (
+                  <div key={idx} className="mb-4 p-3 rounded border bg-slate-50">
+                    <div className="font-semibold mb-1">Câu {idx+1}: {questionContent}</div>
+                    <div className="mb-1">Trả lời: <span className={isCorrect ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>{userAnswer} {isCorrect ? '(Đúng)' : '(Sai)'}</span></div>
+                    <div>Điểm: <span className="font-bold">{d.point}</span></div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}

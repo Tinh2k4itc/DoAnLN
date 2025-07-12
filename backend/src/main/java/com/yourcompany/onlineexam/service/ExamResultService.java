@@ -78,12 +78,12 @@ public class ExamResultService {
     /**
      * Lấy số lượt thi đã sử dụng của user cho một bài thi
      */
-    public int getAttemptCount(String userName, String testName) throws ExecutionException, InterruptedException {
+    public int getAttemptCountByUserId(String userId, String testId) throws ExecutionException, InterruptedException {
         try {
             Firestore db = FirestoreClient.getFirestore();
             ApiFuture<QuerySnapshot> future = db.collection("exam_results")
-                .whereEqualTo("userName", userName)
-                .whereEqualTo("testName", testName)
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("testId", testId)
                 .get();
             List<QueryDocumentSnapshot> documents = future.get().getDocuments();
             return documents.size();
@@ -96,8 +96,8 @@ public class ExamResultService {
     /**
      * Kiểm tra xem user có thể thi bài thi này không
      */
-    public boolean canTakeTest(String userName, String testName, int maxRetake) throws ExecutionException, InterruptedException {
-        int attemptCount = getAttemptCount(userName, testName);
+    public boolean canTakeTestByUserId(String userId, String testId, int maxRetake) throws ExecutionException, InterruptedException {
+        int attemptCount = getAttemptCountByUserId(userId, testId);
         return attemptCount < maxRetake;
     }
 
@@ -151,6 +151,7 @@ public class ExamResultService {
             data.put("status", result.getStatus());
             data.put("details", result.getDetails());
             data.put("leaveScreenCount", result.getLeaveScreenCount());
+            data.put("userId", result.getUserId());
             db.collection("exam_results").add(data);
         } catch (Exception e) {
             e.printStackTrace();
@@ -288,6 +289,7 @@ public class ExamResultService {
                 firebaseData.put("totalQuestions", totalQuestions);
                 firebaseData.put("answeredQuestions", answeredQuestions);
                 firebaseData.put("correctAnswers", result.getDetails().stream().filter(d -> d.isCorrect()).count());
+                firebaseData.put("userId", result.getUserId());
                 
                 db.collection("exam_results").add(firebaseData);
                 System.out.println("[INFO] Đã lưu kết quả vào Firebase thành công");
