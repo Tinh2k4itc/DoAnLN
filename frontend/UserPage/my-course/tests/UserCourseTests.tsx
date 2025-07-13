@@ -2,13 +2,25 @@ import React, { useEffect, useState } from 'react';
 import { fetchParts, Part } from '../../../AdminPage/manage-part/PartApi';
 import { useNavigate } from 'react-router-dom';
 import TestCard from './TestCard';
+import { getCourseById } from '../../../AdminPage/manage-course/courseApi';
 
 const UserCourseTests: React.FC<{ courseId: string }> = ({ courseId }) => {
   const [parts, setParts] = useState<Part[]>([]);
+  const [courseName, setCourseName] = useState<string>('');
+  const [courseCode, setCourseCode] = useState<string>('');
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchParts().then(all => setParts(all.filter(p => p.courseId === courseId)));
+    getCourseById(courseId)
+      .then(course => {
+        setCourseName(course.name);
+        setCourseCode(course.code);
+      })
+      .catch(() => {
+        setCourseName('');
+        setCourseCode('');
+      });
   }, [courseId]);
 
   const handleStartTest = (partId: string) => {
@@ -23,7 +35,17 @@ const UserCourseTests: React.FC<{ courseId: string }> = ({ courseId }) => {
   return (
     <div className="max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-8">
-        <h2 className="text-3xl font-bold text-slate-800">Bài thi của tôi</h2>
+        <div className="flex items-center gap-4">
+          {(courseName || courseCode) && (
+            <span className="text-lg font-bold text-sky-700 bg-sky-50 px-4 py-2 rounded-xl shadow-sm border border-sky-100 mr-4">
+              {courseName}
+              {courseCode && (
+                <span className="text-slate-500 font-normal ml-2">(Mã: <span className="font-mono">{courseCode}</span>)</span>
+              )}
+            </span>
+          )}
+          <h2 className="text-3xl font-bold text-slate-800">Bài thi của tôi</h2>
+        </div>
         <div className="text-sm text-slate-600">
           Tổng cộng: {parts.length} bài thi
         </div>

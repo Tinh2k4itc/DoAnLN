@@ -123,21 +123,48 @@ const UserPage: React.FC = () => {
       case 'my-courses':
       default:
         return (
-          <div ref={myCoursesRef} className="max-w-5xl mx-auto mb-8">
-            <h1 className="text-2xl font-bold mb-6">Khóa học của tôi</h1>
-            {loading ? <div>Đang tải...</div> : (
-              myCourses.length === 0 ? <div>Bạn chưa tham gia khóa học nào.</div> : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          <div ref={myCoursesRef} className="max-w-6xl mx-auto mb-8">
+            <h1 className="text-3xl font-extrabold mb-8 text-slate-800 flex items-center gap-3">
+              <span className="inline-block bg-sky-100 text-sky-600 rounded-full p-2 mr-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" /></svg>
+              </span>
+              Khóa học của tôi
+              <span className="ml-2 bg-sky-600 text-white text-xs font-semibold px-3 py-1 rounded-full">{myCourses.length}</span>
+            </h1>
+            {loading ? (
+              <div className="flex justify-center items-center h-40">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-sky-600"></div>
+              </div>
+            ) : (
+              myCourses.length === 0 ? (
+                <div className="text-center text-slate-500 text-lg py-16">Bạn chưa tham gia khóa học nào.</div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
                   {myCourses.map(course => (
-                    <div key={course.id} className="bg-white rounded-lg shadow p-5 flex flex-col justify-between cursor-pointer transition-transform hover:scale-105 hover:shadow-2xl border border-slate-100"
+                    <div key={course.id} className="bg-white rounded-2xl shadow-xl p-6 flex flex-col justify-between border border-slate-100 hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 group cursor-pointer relative overflow-hidden"
                       onClick={() => navigate(`/my-course/${course.id}`)}>
-                      <div>
-                        <h2 className="text-xl font-semibold mb-2">{course.name}</h2>
-                        <div className="text-slate-600 text-sm mb-1">Mã: <span className="font-mono">{course.code}</span></div>
-                        <div className="text-slate-600 text-sm mb-1">Khoa: {course.department}</div>
-                        <div className="text-slate-600 text-sm mb-1">Số tín chỉ: {course.credits}</div>
-                        <div className="text-slate-500 text-xs mt-2">{course.description}</div>
+                      <div className="flex items-center gap-3 mb-3">
+                        <span className="inline-block bg-sky-50 text-sky-600 rounded-lg p-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" /></svg>
+                        </span>
+                        <h2 className="text-lg font-bold text-slate-800 group-hover:text-sky-700 transition-colors truncate">{course.name}</h2>
+                        <span className="ml-auto bg-sky-100 text-sky-600 text-xs font-semibold px-2 py-0.5 rounded-full">{course.credits} TC</span>
                       </div>
+                      <div className="text-slate-600 text-sm mb-1">Mã: <span className="font-mono text-sky-700">{course.code}</span></div>
+                      <div className="text-slate-600 text-sm mb-1">Khoa: <span className="font-semibold">{course.department}</span></div>
+                      <div className="text-slate-500 text-xs mb-2 line-clamp-2">{course.description}</div>
+                      <div className="flex items-center gap-2 mt-3">
+                        {/* Avatar giảng viên nếu có */}
+                        {/* {course.teacherAvatar && (
+                          <img src={course.teacherAvatar} alt="GV" className="w-8 h-8 rounded-full border-2 border-sky-200 object-cover" />
+                        )}
+                        {course.teacherName && (
+                          <span className="text-slate-700 text-sm font-medium">{course.teacherName}</span>
+                        )} */}
+                      </div>
+                      <button className="mt-4 w-full py-2 rounded-lg bg-sky-600 text-white font-semibold shadow hover:bg-sky-700 transition-colors text-sm">Xem chi tiết</button>
+                      {/* Hiệu ứng nền khi hover */}
+                      <div className="absolute inset-0 bg-sky-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none rounded-2xl z-0"></div>
                     </div>
                   ))}
                 </div>

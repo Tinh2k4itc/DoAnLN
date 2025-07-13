@@ -101,5 +101,17 @@ public class CourseController {
             return ResponseEntity.status(500).build();
         }
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Course> getCourseById(@PathVariable String id) {
+        try {
+            Course course = courseService.getCourseById(id);
+            if (course == null) return ResponseEntity.notFound().build();
+            return ResponseEntity.ok(course);
+        } catch (ExecutionException | InterruptedException e) {
+            logger.error("Lỗi khi lấy course {}: ", id, e);
+            return ResponseEntity.status(500).build();
+        }
+    }
     // ==========================================================
 }

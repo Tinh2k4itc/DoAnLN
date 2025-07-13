@@ -203,5 +203,17 @@ public class CourseService {
         addStudentToCourse(courseId, userId);
     }
 
+    /**
+     * Lấy thông tin một môn học theo ID
+     */
+    public Course getCourseById(String courseId) throws ExecutionException, InterruptedException {
+        DocumentReference docRef = firestore.collection(COLLECTION_NAME).document(courseId);
+        DocumentSnapshot snapshot = docRef.get().get();
+        if (snapshot.exists()) {
+            return snapshot.toObject(Course.class);
+        }
+        return null;
+    }
+
     // ==========================================================
 }
