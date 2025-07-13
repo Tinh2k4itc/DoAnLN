@@ -17,6 +17,16 @@ import { format, isAfter, isBefore, parseISO } from 'date-fns';
 import Notification from './Notification';
 import SystemSettings from './SystemSettings';
 import AdminProfile from './AdminProfile';
+import OverviewCards from './dashboard/OverviewCards';
+import { fetchUsers, User } from './manage-user/UserApi';
+import { fetchExamResults, ExamResult } from './manage-tests/ExamResultApi';
+import ScoreDistributionChart from './dashboard/ScoreDistributionChart';
+import PassFailPieChart from './dashboard/PassFailPieChart';
+import StackedBarChart from './dashboard/StackedBarChart';
+import LineChart from './dashboard/LineChart';
+import Leaderboard from './dashboard/Leaderboard';
+import PerQuestionBarChart from './dashboard/PerQuestionBarChart';
+import RadarChart from './dashboard/RadarChart';
 
 const Dashboard: React.FC = () => {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -25,17 +35,23 @@ const Dashboard: React.FC = () => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [users, setUsers] = useState<User[]>([]);
+  const [examResults, setExamResults] = useState<ExamResult[]>([]);
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [coursesData, banksData, partsData] = await Promise.all([
+        const [coursesData, banksData, partsData, usersData, examResultsData] = await Promise.all([
           fetchCourses(),
           fetchQuestionBanks(),
-          fetchParts()
+          fetchParts(),
+          fetchUsers(),
+          fetchExamResults(),
         ]);
         setCourses(coursesData);
         setBanks(banksData);
         setParts(partsData);
+        setUsers(usersData);
+        setExamResults(examResultsData);
         // Lấy tất cả câu hỏi từ tất cả ngân hàng
         const qLists = await Promise.all(banksData.map(b => fetchQuestions(b.id!)));
         setQuestions(qLists.flat());
@@ -50,6 +66,15 @@ const Dashboard: React.FC = () => {
   const totalBanks = banks.length;
   const totalParts = parts.length;
   const totalQuestions = questions.length;
+  const totalUsers = users.length;
+  // Số lượt thi đã diễn ra
+  const totalExamAttempts = examResults.length;
+  // Tỷ lệ hoàn thành: số bài đã nộp / tổng số lượt thi (nếu có trường status)
+  const submittedCount = examResults.filter(r => r.status === 'submitted').length;
+  const completionRate = totalExamAttempts > 0 ? Math.round((submittedCount / totalExamAttempts) * 100) : 0;
+  // Tỷ lệ đậu: số bài >=5 / số bài đã nộp
+  const passCount = examResults.filter(r => r.status === 'submitted' && r.score >= 5).length;
+  const passRate = submittedCount > 0 ? Math.round((passCount / submittedCount) * 100) : 0;
   // Biểu đồ số lượng đề theo môn học
   const partStats = courses.map(c => ({
     name: c.name,
@@ -90,48 +115,38 @@ const Dashboard: React.FC = () => {
         </label>
         <button className="px-3 py-1 bg-slate-200 rounded" onClick={()=>{setDateFrom('');setDateTo('')}}>Xóa lọc</button>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-sky-100 rounded-xl p-6 text-center">
-          <div className="text-3xl font-bold">{filteredCourses.length}</div>
-          <div className="text-slate-600 mt-2">Môn học</div>
+      <OverviewCards
+        totalCourses={filteredCourses.length}
+        totalBanks={filteredBanks.length}
+        totalParts={filteredParts.length}
+        totalQuestions={filteredQuestions.length}
+        totalUsers={totalUsers}
+        totalExamAttempts={totalExamAttempts}
+        completionRate={completionRate}
+        passRate={passRate}
+      />
+      <div className="grid md:grid-cols-2 gap-8 mb-8">
+        <ScoreDistributionChart examResults={examResults} />
+        <PassFailPieChart examResults={examResults} />
+      </div>
+      <div className="grid md:grid-cols-2 gap-8 mb-8 items-start">
+        <div className="max-w-xl w-full mx-auto">
+          <StackedBarChart
+            courses={courses}
+            parts={parts}
+            banks={banks}
+            questions={questions}
+            users={users}
+          />
         </div>
-        <div className="bg-green-100 rounded-xl p-6 text-center">
-          <div className="text-3xl font-bold">{filteredBanks.length}</div>
-          <div className="text-slate-600 mt-2">Ngân hàng câu hỏi</div>
-        </div>
-        <div className="bg-yellow-100 rounded-xl p-6 text-center">
-          <div className="text-3xl font-bold">{filteredParts.length}</div>
-          <div className="text-slate-600 mt-2">Đề thi</div>
-        </div>
-        <div className="bg-pink-100 rounded-xl p-6 text-center">
-          <div className="text-3xl font-bold">{filteredQuestions.length}</div>
-          <div className="text-slate-600 mt-2">Câu hỏi</div>
+        <div className="max-w-xl w-full mx-auto">
+          <LineChart examResults={examResults} />
         </div>
       </div>
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold mb-2">Số lượng đề thi theo môn học</h2>
-        <div className="flex gap-2 items-end h-32">
-          {partStats.map(stat => (
-            <div key={stat.name} className="flex flex-col items-center">
-              <div className="bg-sky-400 w-8" style={{height: `${stat.count * 20}px`}}></div>
-              <div className="text-xs mt-1 w-16 truncate text-center">{stat.name}</div>
-              <div className="text-xs">{stat.count}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div>
-        <h2 className="text-lg font-semibold mb-2">Số lượng câu hỏi theo ngân hàng</h2>
-        <div className="flex gap-2 items-end h-32">
-          {questionStats.map(stat => (
-            <div key={stat.name} className="flex flex-col items-center">
-              <div className="bg-green-400 w-8" style={{height: `${stat.count * 10}px`}}></div>
-              <div className="text-xs mt-1 w-16 truncate text-center">{stat.name}</div>
-              <div className="text-xs">{stat.count}</div>
-            </div>
-          ))}
-        </div>
-      </div>
+      <RadarChart courses={courses} examResults={examResults} parts={parts} />
+      <Leaderboard users={users} examResults={examResults} courses={courses} parts={parts} questions={questions} />
+      <PerQuestionBarChart examResults={examResults} />
+      
     </div>
   );
 };
