@@ -105,7 +105,7 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
         fetchParts(),
         fetchCourses()
       ]);
-      setParts(partData);
+      setParts(courseId ? partData.filter(p => p.courseId === courseId) : partData);
       setCourses(courseData);
       if (courseData.length === 0) {
         setLoadError('Không có dữ liệu môn học. Vui lòng tạo môn học trước khi tạo bài thi!');

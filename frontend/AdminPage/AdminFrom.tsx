@@ -27,6 +27,8 @@ import LineChart from './dashboard/LineChart';
 import Leaderboard from './dashboard/Leaderboard';
 import PerQuestionBarChart from './dashboard/PerQuestionBarChart';
 import RadarChart from './dashboard/RadarChart';
+import TestNotification from './TestNotification';
+import AdminMailbox from './AdminMailbox';
 
 const Dashboard: React.FC = () => {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -154,6 +156,7 @@ const Dashboard: React.FC = () => {
 const AdminForm: React.FC = () => {
   const [activeSection, setActiveSection] = useState<string>('dashboard');
   const [isSidebarExpanded, setIsSidebarExpanded] = useState<boolean>(true);
+  const [showTestNotification, setShowTestNotification] = useState<boolean>(false);
 
   const renderActiveSection = () => {
     switch (activeSection) {
@@ -171,6 +174,8 @@ const AdminForm: React.FC = () => {
         return <ExamResults />;
       case 'notifications':
         return <Notification />;
+      case 'settings':
+        return <AdminMailbox />;
       case 'system-settings':
         return <SystemSettings />;
       case 'admin-profile':
@@ -191,8 +196,23 @@ const AdminForm: React.FC = () => {
         onExpandChange={setIsSidebarExpanded}
       />
       <main className={`main-content bg-slate-50 p-8 overflow-y-auto min-h-screen ${!isSidebarExpanded ? 'sidebar-collapsed' : ''}`}>
+        {/* Test Notification Button */}
+        {/* <div className="fixed top-4 right-4 z-40">
+          <button
+            onClick={() => setShowTestNotification(true)}
+            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 shadow-lg"
+          >
+            Test Notification
+          </button>
+        </div> */}
+        
         {renderActiveSection()}
       </main>
+      
+      {/* Test Notification Modal */}
+      {showTestNotification && (
+        <TestNotification onClose={() => setShowTestNotification(false)} />
+      )}
     </div>
   );
 };

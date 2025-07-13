@@ -2,11 +2,16 @@ import React, { useEffect, useState } from 'react';
 import Sidebar from './left-bar/Sidebar';
 import UserForm from './my-course/user-test/UserForm';
 import UserProfile from './UserProfile';
+import UserNotification from './UserNotification';
+import UserMailbox from './UserMailbox';
 import { fetchParts, Part } from '../AdminPage/manage-part/PartApi';
 import { fetchCourses, Course } from '../AdminPage/manage-course/courseApi';
 import * as CourseStudentApi from '../AdminPage/manage-course/course-student/CourseStudentApi';
 import { auth } from '../shared/firebase-config';
 import { useNavigate } from 'react-router-dom';
+import { ref, onValue } from 'firebase/database';
+import { toast } from 'react-toastify';
+import { realtimeDb } from '../shared/firebase-config';
 
 const UserPage: React.FC = () => {
   const [parts, setParts] = useState<Part[]>([]);
@@ -18,6 +23,8 @@ const UserPage: React.FC = () => {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState<boolean>(true);
   const myCoursesRef = React.useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const [unreadMessageCount, setUnreadMessageCount] = useState(0);
+  const lastToastTimestampRef = React.useRef(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -61,10 +68,58 @@ const UserPage: React.FC = () => {
     return () => window.removeEventListener('user-sidebar-click', handler as EventListener);
   }, []);
 
+  // Lắng nghe số tin nhắn chưa đọc từ UserMailbox
+  useEffect(() => {
+    const handleUnread = (e: any) => setUnreadMessageCount(e.detail || 0);
+    window.addEventListener('user-unread-message', handleUnread);
+    return () => window.removeEventListener('user-unread-message', handleUnread);
+  }, []);
+
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (!user) return;
+    const messagesRef = ref(realtimeDb, 'messages');
+    const handle = onValue(messagesRef, (snapshot) => {
+      let count = 0;
+      let latestSender = '';
+      let latestContent = '';
+      let latestTimestamp = 0;
+      if (snapshot.exists()) {
+        const allConvs = snapshot.val();
+        Object.values(allConvs).forEach((conv: any) => {
+          Object.values(conv).forEach((msg: any) => {
+            if (!msg.isRead && msg.receiverId === user.uid) {
+              count++;
+              if (msg.timestamp > latestTimestamp) {
+                latestSender = msg.senderName || msg.senderId;
+                latestContent = msg.content;
+                latestTimestamp = msg.timestamp;
+              }
+            }
+          });
+        });
+      }
+      setUnreadMessageCount(count);
+      // Hiện toast popup nếu có tin nhắn mới đến (timestamp mới nhất)
+      if (count > 0 && latestTimestamp > lastToastTimestampRef.current && latestTimestamp > Date.now() - 60000) {
+        toast.info(`Bạn có tin nhắn mới từ ${latestSender}: "${latestContent}"`);
+        lastToastTimestampRef.current = latestTimestamp;
+      }
+    });
+    return () => handle();
+  }, []);
+
   const renderActiveSection = () => {
     switch (activeSection) {
       case 'profile':
         return <UserProfile />;
+      case 'notifications':
+        return <UserNotification />;
+      case 'settings':
+        return <UserMailbox onUnreadCountChange={(count: number) => {
+          setUnreadMessageCount(count);
+          window.dispatchEvent(new CustomEvent('user-unread-message', { detail: count }));
+        }} />;
       case 'my-courses':
       default:
         return (
@@ -96,7 +151,12 @@ const UserPage: React.FC = () => {
   return (
     <div className="flex h-screen bg-slate-100 overflow-x-hidden" style={{ scrollbarWidth: 'none' }}>
       <style>{`::-webkit-scrollbar { display: none; }`}</style>
-      <Sidebar activeItemId={activeSection} onItemClick={setActiveSection} onExpandChange={setIsSidebarExpanded} />
+      <Sidebar
+        activeItemId={activeSection}
+        onItemClick={setActiveSection}
+        onExpandChange={setIsSidebarExpanded}
+        unreadMessageCount={unreadMessageCount}
+      />
       <div className={`user-main-content flex-1 p-8${!isSidebarExpanded ? ' sidebar-collapsed' : ''}`}>
         {renderActiveSection()}
       </div>

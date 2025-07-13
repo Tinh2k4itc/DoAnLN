@@ -15,12 +15,14 @@ import {
   ClipboardDocumentListIcon,
   UserCircleIcon,
   ArrowLeftIcon,
+  EnvelopeIcon,
 } from './icons';
 import { useNavigate } from 'react-router-dom';
 import { ref, onValue } from 'firebase/database';
 import { realtimeDb } from '../../shared/firebase-config';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../shared/firebase-config';
+import { notificationService } from '../../services/notificationService';
 
 export interface IconProps {
   className?: string;
@@ -49,7 +51,7 @@ const mainNavItems: SidebarItemInfo[] = [
 
 const accountNavItems: SidebarItemInfo[] = [
   { id: 'admin-profile', label: 'Hồ sơ quản trị', icon: UserCircleIcon },
-  { id: 'settings', label: 'Cài đặt', icon: Cog6ToothIcon },
+  { id: 'settings', label: 'Hộp thư', icon: EnvelopeIcon },
   { id: 'notifications', label: 'Thông báo', icon: BellIcon },
 ];
 
@@ -57,6 +59,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItemId, onItemClick, onExpandCh
   const [isExpanded, setIsExpanded] = useState<boolean>(true);
   const navigate = useNavigate();
   const [hasNewWarning, setHasNewWarning] = useState(false);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
 
   const handleItemClick = useCallback((id: string) => {
     if (id === 'manage-students') {
@@ -93,6 +96,26 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItemId, onItemClick, onExpandCh
       }
       setHasNewWarning(arr.length > 0);
     });
+    return () => handle();
+  }, []);
+
+  // Lắng nghe notifications từ Realtime Database
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const notificationsRef = ref(realtimeDb, `notifications/${user.uid}`);
+    const handle = onValue(notificationsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const notifications = Object.values(data);
+        const unreadCount = notifications.filter((notification: any) => !notification.isRead).length;
+        setUnreadNotificationCount(unreadCount);
+      } else {
+        setUnreadNotificationCount(0);
+      }
+    });
+
     return () => handle();
   }, []);
 
@@ -168,12 +191,12 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItemId, onItemClick, onExpandCh
               isExpanded={isExpanded}
               onClick={() => handleItemClick(item.id)}
             />
-            {item.id === 'notifications' && hasNewWarning && (
+            {item.id === 'notifications' && (hasNewWarning || unreadNotificationCount > 0) && (
               <span style={{
                 position: 'absolute',
                 top: 8,
                 right: isExpanded ? 24 : 8,
-                background: 'red',
+                background: unreadNotificationCount > 0 ? '#3b82f6' : 'red',
                 color: 'white',
                 borderRadius: '50%',
                 width: 16,
@@ -183,7 +206,9 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItemId, onItemClick, onExpandCh
                 justifyContent: 'center',
                 fontSize: 10,
                 fontWeight: 'bold',
-              }}>!</span>
+              }}>
+                {unreadNotificationCount > 0 ? unreadNotificationCount : '!'}
+              </span>
             )}
           </div>
         ))}

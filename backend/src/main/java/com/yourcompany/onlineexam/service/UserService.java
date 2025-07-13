@@ -7,7 +7,9 @@ import com.yourcompany.onlineexam.model.User;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 @Service
@@ -60,5 +62,59 @@ public class UserService {
         ref.update("isDeleted", isDeleted);
         User user = ref.get().get().toObject(User.class);
         return user;
+    }
+
+    /**
+     * Tìm userId theo email
+     */
+    public String findUserIdByEmail(String email) {
+        try {
+            Firestore db = FirestoreClient.getFirestore();
+            Query query = db.collection(COLLECTION_NAME)
+                .whereEqualTo("email", email.toLowerCase().trim());
+            
+            ApiFuture<QuerySnapshot> future = query.get();
+            List<QueryDocumentSnapshot> docs = future.get().getDocuments();
+            
+            if (!docs.isEmpty()) {
+                return docs.get(0).getId();
+            }
+            return null;
+        } catch (Exception e) {
+            System.err.println("Lỗi khi tìm user theo email: " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Lấy thông tin user
+     */
+    public Map<String, Object> getUserInfo(String userId) {
+        try {
+            Firestore db = FirestoreClient.getFirestore();
+            DocumentReference docRef = db.collection(COLLECTION_NAME).document(userId);
+            ApiFuture<DocumentSnapshot> future = docRef.get();
+            DocumentSnapshot document = future.get();
+            
+            Map<String, Object> userInfo = new HashMap<>();
+            if (document.exists()) {
+                userInfo.put("uid", document.getId());
+                userInfo.put("email", document.getString("email"));
+                userInfo.put("username", document.getString("username"));
+                userInfo.put("displayName", document.getString("displayName"));
+                userInfo.put("photoURL", document.getString("photoURL"));
+                userInfo.put("role", document.getString("role"));
+                userInfo.put("phone", document.getString("phone"));
+                userInfo.put("address", document.getString("address"));
+                userInfo.put("bio", document.getString("bio"));
+                userInfo.put("studentId", document.getString("studentId"));
+                userInfo.put("major", document.getString("major"));
+                userInfo.put("year", document.getString("year"));
+            }
+            return userInfo;
+        } catch (Exception e) {
+            System.err.println("Lỗi khi lấy thông tin user: " + e.getMessage());
+            return new HashMap<>();
+        }
     }
 } 

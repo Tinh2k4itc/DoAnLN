@@ -5,6 +5,7 @@ import com.google.cloud.firestore.Firestore;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.cloud.FirestoreClient;
+import com.google.firebase.database.FirebaseDatabase;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,6 +20,9 @@ public class FirebaseConfig {
     @Value("${firebase.config.path}")
     private String firebaseConfigPath;
 
+    @Value("${firebase.project.id}")
+    private String projectId;
+
     private final ResourceLoader resourceLoader;
 
     public FirebaseConfig(ResourceLoader resourceLoader) {
@@ -32,6 +36,7 @@ public class FirebaseConfig {
 
         FirebaseOptions options = FirebaseOptions.builder()
                 .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+                .setDatabaseUrl("https://" + projectId + "-default-rtdb.firebaseio.com")
                 .build();
 
         if (FirebaseApp.getApps().isEmpty()) {
@@ -39,5 +44,12 @@ public class FirebaseConfig {
         }
 
         return FirestoreClient.getFirestore();
+    }
+
+    @Bean
+    public FirebaseDatabase firebaseDatabase() throws IOException {
+        // Đảm bảo Firebase đã được khởi tạo trước
+        firestore();
+        return FirebaseDatabase.getInstance();
     }
 }

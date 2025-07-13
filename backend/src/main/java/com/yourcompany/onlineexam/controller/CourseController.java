@@ -81,9 +81,9 @@ public class CourseController {
     }
 
     @PostMapping("/{id}/students")
-    public ResponseEntity<Void> addStudentToCourse(@PathVariable String id, @RequestBody String studentId) {
+    public ResponseEntity<Void> addStudentToCourse(@PathVariable String id, @RequestBody String studentIdOrEmail) {
         try {
-            courseService.addStudentToCourse(id, studentId);
+            courseService.addStudentToCourseByEmailOrUid(id, studentIdOrEmail);
             return ResponseEntity.ok().build();
         } catch (ExecutionException | InterruptedException e) {
             logger.error("Lỗi khi thêm sinh viên vào course {}: ", id, e);

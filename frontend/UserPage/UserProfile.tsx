@@ -17,6 +17,7 @@ import {
   MapPinIcon,
   DocumentTextIcon
 } from './left-bar/icons';
+import axios from 'axios';
 
 interface UserProfile {
   displayName: string;
@@ -60,17 +61,35 @@ const UserProfile: React.FC = () => {
 
   useEffect(() => {
     if (user) {
-      setProfile({
-        displayName: user.displayName || '',
-        email: user.email || '',
-        username: user.displayName?.toLowerCase().replace(/\s+/g, '.') || '',
-        phone: '',
-        address: '',
-        bio: '',
-        studentId: '',
-        major: '',
-        year: ''
-      });
+      // Lấy thông tin user từ backend
+      axios.get(`/api/users/${user.uid}`)
+        .then(res => {
+          const data = res.data;
+          setProfile({
+            displayName: data.displayName || user.displayName || '',
+            email: data.email || user.email || '',
+            username: data.username || user.displayName?.toLowerCase().replace(/\s+/g, '.') || '',
+            phone: data.phone || '',
+            address: data.address || '',
+            bio: data.bio || '',
+            studentId: data.studentId || '',
+            major: data.major || '',
+            year: data.year || ''
+          });
+        })
+        .catch(() => {
+          setProfile({
+            displayName: user.displayName || '',
+            email: user.email || '',
+            username: user.displayName?.toLowerCase().replace(/\s+/g, '.') || '',
+            phone: '',
+            address: '',
+            bio: '',
+            studentId: '',
+            major: '',
+            year: ''
+          });
+        });
     }
   }, [user]);
 
@@ -83,31 +102,30 @@ const UserProfile: React.FC = () => {
 
   const handleSave = async () => {
     if (!user) return;
-
     setIsLoading(true);
     setMessage(null);
-
     try {
       // Cập nhật displayName
       if (profile.displayName !== user.displayName) {
-        await updateProfile(user, {
-          displayName: profile.displayName
-        });
+        await updateProfile(user, { displayName: profile.displayName });
       }
-
       // Cập nhật email nếu thay đổi
       if (profile.email !== user.email) {
         await updateEmail(user, profile.email);
       }
-
+      // Gọi API backend để cập nhật các trường bổ sung
+      await axios.put(`/api/users/${user.uid}`, {
+        ...profile,
+        uid: user.uid
+      });
       setMessage({ type: 'success', text: 'Cập nhật thông tin thành công!' });
       setIsEditing(false);
     } catch (error: any) {
       console.error('Lỗi cập nhật profile:', error);
-      setMessage({ 
-        type: 'error', 
-        text: error.code === 'auth/requires-recent-login' 
-          ? 'Vui lòng xác thực lại để thay đổi email' 
+      setMessage({
+        type: 'error',
+        text: error.code === 'auth/requires-recent-login'
+          ? 'Vui lòng xác thực lại để thay đổi email'
           : 'Có lỗi xảy ra khi cập nhật thông tin'
       });
     } finally {

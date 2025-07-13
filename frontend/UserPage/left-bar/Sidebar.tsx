@@ -1,8 +1,9 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import SidebarItem from './SidebarItem';
-import { auth, storage } from '../../shared/firebase-config';
+import { auth, storage, realtimeDb } from '../../shared/firebase-config';
 import { updateProfile } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref as dbRef, onValue } from 'firebase/database';
 import { signOut } from 'firebase/auth';
 
 export interface IconProps {
@@ -31,6 +32,7 @@ import {
   BellIcon, // Notifications
   ArrowRightOnRectangleIcon, // Logout
   CameraIcon,
+  EnvelopeIcon, // Hộp thư
 } from './icons'; // Adjusted path
 
 const mainNavItems: SidebarItemInfo[] = [
@@ -41,7 +43,7 @@ const mainNavItems: SidebarItemInfo[] = [
 
 const accountNavItems: SidebarItemInfo[] = [
   { id: 'profile', label: 'Hồ sơ', icon: UserCircleIcon },
-  { id: 'settings', label: 'Cài đặt', icon: Cog6ToothIcon },
+  { id: 'settings', label: 'Hộp thư', icon: EnvelopeIcon },
   { id: 'notifications', label: 'Thông báo', icon: BellIcon },
 ];
 
@@ -49,14 +51,16 @@ interface SidebarProps {
   activeItemId: string;
   onItemClick: (id: string) => void;
   onExpandChange?: (isExpanded: boolean) => void;
+  unreadMessageCount?: number;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeItemId, onItemClick, onExpandChange }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeItemId, onItemClick, onExpandChange, unreadMessageCount }) => {
   const [isExpanded, setIsExpanded] = useState<boolean>(true);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
 
   const handleItemClick = useCallback((id: string) => {
     onItemClick(id);
@@ -145,6 +149,26 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItemId, onItemClick, onExpandCh
   const triggerFileInput = () => {
     fileInputRef.current?.click();
   };
+
+  // Lắng nghe notifications từ Realtime Database
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const notificationsRef = dbRef(realtimeDb, `notifications/${user.uid}`);
+    const handle = onValue(notificationsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const notifications = Object.values(data);
+        const unreadCount = notifications.filter((notification: any) => !notification.isRead).length;
+        setUnreadNotificationCount(unreadCount);
+      } else {
+        setUnreadNotificationCount(0);
+      }
+    });
+
+    return () => handle();
+  }, []);
 
   return (
     <aside className={`sidebar-transition bg-slate-900 text-slate-300 flex flex-col fixed top-0 left-0 h-screen z-50 shadow-2xl overflow-y-hidden ${isExpanded ? 'w-64 p-4' : 'w-20 md:w-24 p-3 items-center'}`}>
@@ -241,16 +265,17 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItemId, onItemClick, onExpandCh
       </nav>
 
       {/* Account Navigation Items & Profile */}
-      <div className={`mt-auto pt-3 border-t w-full ${isExpanded ? 'border-slate-700/60' : 'border-slate-700 flex flex-col items-center'}`}>
+      <div className={`mt-auto pt-3 border-t w-full flex flex-col justify-end ${isExpanded ? 'border-slate-700/60' : 'border-slate-700 items-center'}`}>
         {isExpanded && <h3 className="px-3 pt-1 pb-1 text-xs font-semibold text-slate-500 uppercase tracking-wider">Tài khoản</h3>}
         {accountNavItems.map((item) => (
-          <SidebarItem
-            key={item.id}
-            item={item}
-            isActive={activeItemId === item.id}
-            isExpanded={isExpanded}
-            onClick={() => handleItemClick(item.id)}
-          />
+          <div style={{ position: 'relative' }} key={item.id}>
+            <SidebarItem
+              item={item}
+              isActive={activeItemId === item.id}
+              isExpanded={isExpanded}
+              onClick={() => handleItemClick(item.id)}
+            />
+          </div>
         ))}
         
         {/* User Info / Logout Button */}

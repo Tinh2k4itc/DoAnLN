@@ -34,11 +34,11 @@ const ExamResults: React.FC<ExamResultsProps> = ({ courseId }) => {
     fetchExamResults()
       .then(data => {
         if (courseId) {
-          // Không có courseId trong ExamResult, thử lọc theo testName nếu có định dạng mã môn học
-          // Nếu không xác định được, chỉ hiển thị tất cả kết quả
-          // Ví dụ: nếu testName có dạng "[courseId] - Tên đề thi" thì có thể tách mã môn học
-          // Ở đây mặc định không lọc, chỉ hiển thị tất cả
-          setResults(data);
+          // Lọc kết quả theo courseId dựa vào testId và danh sách bài thi
+          fetchTests().then(tests => {
+            const testIds = tests.filter(t => t.courseId === courseId).map(t => t.id);
+            setResults(data.filter(r => testIds.includes(r.testId)));
+          });
         } else {
           setResults(data);
         }

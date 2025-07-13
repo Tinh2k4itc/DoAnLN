@@ -25,4 +25,12 @@ public class User {
     private Date createdAt;
     private Date lastLoginAt;
     private Boolean isDeleted;
+
+    // Thông tin bổ sung cho profile
+    private String phone;
+    private String address;
+    private String bio;
+    private String studentId;
+    private String major;
+    private String year;
 }

@@ -18,7 +18,11 @@ const emptyTest: Omit<Test, 'id'> = {
 
 const PAGE_SIZE = 10;
 
-const ManageTests: React.FC = () => {
+interface ManageTestsProps {
+  courseId?: string;
+}
+
+const ManageTests: React.FC<ManageTestsProps> = ({ courseId }) => {
   const [tests, setTests] = useState<Test[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -40,13 +44,13 @@ const ManageTests: React.FC = () => {
     loadData();
     loadBanks();
     loadCourses();
-  }, []);
+  }, [courseId]);
 
   const loadData = async () => {
     setLoading(true);
     try {
       const data = await fetchTests();
-      setTests(data);
+      setTests(courseId ? data.filter(t => t.courseId === courseId) : data);
     } finally {
       setLoading(false);
     }

@@ -35,7 +35,7 @@ const ManageQuestion: React.FC<ManageQuestionProps> = ({ courseId }) => {
     setLoading(true);
     try {
       const [bankData, courseData] = await Promise.all([
-        fetchQuestionBanks(search, courseId || searchCourse),
+        fetchQuestionBanks(search, courseId),
         fetchCourses()
       ]);
       setBanks(bankData);
