@@ -9,34 +9,31 @@ import com.google.firebase.database.FirebaseDatabase;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
+
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Base64;
 
 @Configuration
 public class FirebaseConfig {
 
-    @Value("${firebase.config.path}")
-    private String firebaseConfigPath;
+    @Value("${FIREBASE_SERVICE_ACCOUNT_BASE64}")
+    private String serviceAccountBase64;
 
-    @Value("${firebase.project.id}")
+    @Value("${FIREBASE_PROJECT_ID}")
     private String projectId;
-
-    private final ResourceLoader resourceLoader;
-
-    public FirebaseConfig(ResourceLoader resourceLoader) {
-        this.resourceLoader = resourceLoader;
-    }
 
     @Bean
     public Firestore firestore() throws IOException {
-        Resource resource = resourceLoader.getResource(firebaseConfigPath);
-        InputStream serviceAccount = resource.getInputStream();
+        // Decode từ BASE64 → InputStream
+        byte[] decodedBytes = Base64.getDecoder().decode(serviceAccountBase64);
+        InputStream serviceAccount = new ByteArrayInputStream(decodedBytes);
 
         FirebaseOptions options = FirebaseOptions.builder()
                 .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                 .setDatabaseUrl("https://" + projectId + "-default-rtdb.firebaseio.com")
+                .setProjectId(projectId)
                 .build();
 
         if (FirebaseApp.getApps().isEmpty()) {
@@ -48,7 +45,7 @@ public class FirebaseConfig {
 
     @Bean
     public FirebaseDatabase firebaseDatabase() throws IOException {
-        // Đảm bảo Firebase đã được khởi tạo trước
+        // Đảm bảo Firestore đã được khởi tạo
         firestore();
         return FirebaseDatabase.getInstance();
     }
