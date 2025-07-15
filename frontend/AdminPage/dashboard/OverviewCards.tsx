@@ -25,7 +25,7 @@ const OverviewCards: React.FC<OverviewCardsProps> = ({
   passRate,
 }) => {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8">
       <div className={`bg-sky-100/80 border-sky-200/60 border-2 ${cardStyle}`}>
         <div className="text-3xl font-bold">{totalCourses}</div>
         <div className="text-slate-600 mt-2">Môn học</div>

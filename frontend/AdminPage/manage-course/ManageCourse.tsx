@@ -180,11 +180,11 @@ const ManageCourse: React.FC = () => {
       {loading ? (
         <div className="text-center text-slate-500">Đang tải...</div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
           {filteredCourses.map(course => (
             <div
               key={course.id}
-              className="bg-white rounded-lg shadow p-5 flex flex-col justify-between cursor-pointer transition-transform hover:scale-105 hover:shadow-2xl border border-slate-100"
+              className="bg-white rounded-lg shadow p-4 sm:p-5 flex flex-col justify-between cursor-pointer transition-transform hover:scale-105 hover:shadow-2xl border border-slate-100"
               onClick={() => navigate(`/admin/course/${course.id}`)}
             >
               <div>

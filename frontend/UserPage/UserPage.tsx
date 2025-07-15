@@ -184,7 +184,7 @@ const UserPage: React.FC = () => {
         onExpandChange={setIsSidebarExpanded}
         unreadMessageCount={unreadMessageCount}
       />
-      <div className={`user-main-content flex-1 p-8${!isSidebarExpanded ? ' sidebar-collapsed' : ''}`}>
+      <div className={`user-main-content flex-1 p-2 sm:p-4 md:p-8${!isSidebarExpanded ? ' sidebar-collapsed' : ''}`}>
         {renderActiveSection()}
       </div>
     </div>

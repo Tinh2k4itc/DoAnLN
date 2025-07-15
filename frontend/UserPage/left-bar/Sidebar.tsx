@@ -171,7 +171,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItemId, onItemClick, onExpandCh
   }, []);
 
   return (
-    <aside className={`sidebar-transition bg-slate-900 text-slate-300 flex flex-col fixed top-0 left-0 h-screen z-50 shadow-2xl overflow-y-hidden ${isExpanded ? 'w-64 p-4' : 'w-20 md:w-24 p-3 items-center'}`}>
+    <aside className={`sidebar-transition bg-slate-900 text-slate-300 flex flex-col fixed top-0 left-0 h-screen z-50 shadow-2xl overflow-y-hidden ${isExpanded ? 'w-48 sm:w-64 p-2 sm:p-4' : 'w-16 sm:w-20 md:w-24 p-1 sm:p-3 items-center'}`}>
       {/* Message */}
       {message && (
         <div className={`absolute top-4 left-4 right-4 z-50 p-3 rounded-lg flex items-center space-x-2 ${

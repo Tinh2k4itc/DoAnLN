@@ -128,139 +128,136 @@ const UserNotification: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-        {/* Header */}
-        <div className="p-6 border-b border-slate-200 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-              Thông báo của tôi
-              {unreadCount > 0 && (
-                <span className="ml-2 inline-block bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-bounce">
-                  {unreadCount}
-                </span>
-              )}
-            </h1>
-            <p className="text-slate-600 mt-1">Quản lý thông báo hệ thống</p>
-          </div>
-          {notifications.some(n => !n.isRead) && (
-            <button
-              onClick={handleMarkAllAsRead}
-              className="px-4 py-2 bg-sky-100 text-sky-700 rounded-lg hover:bg-sky-200 transition-colors font-medium"
-            >
-              Đánh dấu tất cả đã đọc
-            </button>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-8 gap-2 sm:gap-0">
+        <div className="flex items-center gap-2 sm:gap-4">
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-800">Thông báo của tôi</h2>
+          {unreadCount > 0 && (
+            <span className="bg-red-500 text-white text-xs sm:text-sm font-bold px-2 sm:px-3 py-1 rounded-full">
+              {unreadCount}
+            </span>
           )}
         </div>
-
-        {/* Content */}
-        <div className="max-h-96 overflow-y-auto" ref={listRef}>
-          {loading ? (
-            <div className="p-6 text-center text-slate-500">
-              <div className="w-6 h-6 border-2 border-sky-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-              Đang tải thông báo...
-            </div>
-          ) : notifications.length === 0 ? (
-            <div className="p-8 text-center text-slate-500">
-              <div className="text-4xl mb-4">🔔</div>
-              <h3 className="text-lg font-medium mb-2">Không có thông báo nào</h3>
-              <p className="text-sm">Bạn sẽ nhận được thông báo khi có bài thi mới hoặc được thêm vào lớp học</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-slate-100">
-              {notifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  className={`p-6 hover:bg-slate-50 transition-colors ${
-                    !notification.isRead ? 'bg-sky-50' : ''
-                  }`}
-                >
-                  <div className="flex items-start space-x-4">
-                    {/* Icon */}
-                    <div className="flex-shrink-0">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${
-                        !notification.isRead ? 'bg-sky-100' : 'bg-slate-100'
-                      }`}>
-                        {getNotificationIcon(notification.type)}
-                      </div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <h3 className="text-lg font-semibold text-slate-800">
-                          {notification.title}
-                        </h3>
-                        {!notification.isRead && (
-                          <span className="px-2 py-1 bg-sky-100 text-sky-700 text-xs rounded-full font-medium">
-                            Mới
-                          </span>
-                        )}
-                      </div>
-                      
-                      <p className="text-slate-600 mb-3 leading-relaxed">
-                        {notification.message}
-                      </p>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4 text-sm text-slate-500">
-                          <span>
-                            {format(notification.createdAt, 'dd/MM/yyyy HH:mm', { locale: vi })}
-                          </span>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${
-                            getNotificationColor(notification.type)
-                          }`}>
-                            {notification.type === 'exam_created' ? 'Bài thi mới' : 
-                             notification.type === 'course_added' ? 'Được thêm vào lớp' : 
-                             notification.type}
-                          </span>
-                        </div>
-                        
-                        <div className="flex space-x-2">
-                          {!notification.isRead && (
-                            <button
-                              onClick={() => handleMarkAsRead(notification.id)}
-                              className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors font-medium"
-                            >
-                              Đã đọc
-                            </button>
-                          )}
-                          <button
-                            onClick={() => handleDeleteNotification(notification.id)}
-                            className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors font-medium"
-                          >
-                            Xóa
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
         {notifications.length > 0 && (
-          <div className="p-4 border-t border-slate-200 bg-slate-50">
-            <div className="flex justify-between items-center text-sm text-slate-600">
-              <span>
-                Tổng cộng: {notifications.length} thông báo
-                {notifications.filter(n => !n.isRead).length > 0 && (
-                  <span className="ml-2 text-sky-600 font-medium">
-                    ({notifications.filter(n => !n.isRead).length} chưa đọc)
-                  </span>
-                )}
-              </span>
-              <span>
-                Cập nhật lần cuối: {format(new Date(), 'dd/MM/yyyy HH:mm', { locale: vi })}
-              </span>
-            </div>
-          </div>
+          <button
+            onClick={handleMarkAllAsRead}
+            className="bg-sky-600 text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold hover:bg-sky-700 transition-colors"
+          >
+            Đánh dấu tất cả đã đọc
+          </button>
         )}
       </div>
-      {/* Hiển thị popup notification */}
-      <ToastContainer position="top-right" />
+
+      {notifications.length === 0 ? (
+        <div className="text-center py-8 sm:py-12">
+          <div className="text-slate-400 mb-4">
+            <svg className="w-12 h-12 sm:w-16 sm:h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15 17h5l-5 5v-5zM4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
+            </svg>
+          </div>
+          <h3 className="text-lg sm:text-xl font-semibold text-slate-600 mb-2">Chưa có thông báo nào</h3>
+          <p className="text-slate-500">Bạn sẽ nhận được thông báo khi có hoạt động mới.</p>
+        </div>
+      ) : (
+        <div className="space-y-3 sm:space-y-4">
+          {notifications.map((notification) => (
+            <div
+              key={notification.id}
+              className={`bg-white rounded-xl shadow-sm border p-3 sm:p-4 transition-all duration-200 ${
+                !notification.isRead ? 'border-sky-200 bg-sky-50/50' : 'border-slate-200'
+              }`}
+            >
+              <div className="flex items-start gap-3 sm:gap-4">
+                <div className="flex-shrink-0">
+                  <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center ${
+                    notification.type === 'exam' ? 'bg-orange-100 text-orange-600' :
+                    notification.type === 'course' ? 'bg-green-100 text-green-600' :
+                    notification.type === 'message' ? 'bg-blue-100 text-blue-600' :
+                    'bg-slate-100 text-slate-600'
+                  }`}>
+                    {notification.type === 'exam' && (
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    )}
+                    {notification.type === 'course' && (
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                      </svg>
+                    )}
+                    {notification.type === 'message' && (
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2 mb-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-sm sm:text-base text-slate-800 truncate">
+                        {notification.title}
+                      </h3>
+                      {!notification.isRead && (
+                        <span className="bg-sky-500 text-white text-xs px-2 py-0.5 rounded-full">Mới</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs sm:text-sm text-slate-500">
+                        {new Date(notification.createdAt).toLocaleDateString('vi-VN')}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-sm sm:text-base text-slate-600 mb-2 sm:mb-3 line-clamp-2">
+                    {notification.message}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className={`inline-block px-2 py-1 text-xs rounded-full ${
+                      notification.type === 'exam' ? 'bg-orange-100 text-orange-700' :
+                      notification.type === 'course' ? 'bg-green-100 text-green-700' :
+                      notification.type === 'message' ? 'bg-blue-100 text-blue-700' :
+                      'bg-slate-100 text-slate-700'
+                    }`}>
+                      {notification.type === 'exam' ? 'Bài Thi Mới' :
+                       notification.type === 'course' ? 'Được Thêm' :
+                       notification.type === 'message' ? 'Tin Nhắn' : 'Thông Báo'}
+                    </span>
+                    <button
+                      onClick={() => handleMarkAsRead(notification.id)}
+                      className={`px-2 py-1 text-xs rounded ${
+                        notification.isRead
+                          ? 'bg-green-100 text-green-700 cursor-default'
+                          : 'bg-sky-100 text-sky-700 hover:bg-sky-200'
+                      }`}
+                      disabled={notification.isRead}
+                    >
+                      {notification.isRead ? 'Đã đọc' : 'Đánh dấu đã đọc'}
+                    </button>
+                    <button
+                      onClick={() => handleDeleteNotification(notification.id)}
+                      className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+                    >
+                      Xóa
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {notifications.length > 0 && (
+        <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-slate-200">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+            <div className="text-sm sm:text-base text-slate-600">
+              Tổng cộng: {notifications.length} thông báo ({unreadCount} chưa đọc)
+            </div>
+            <div className="text-xs sm:text-sm text-slate-500">
+              Cập nhật lần cuối: {new Date().toLocaleDateString('vi-VN')} {new Date().toLocaleTimeString('vi-VN', { hour12: false })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

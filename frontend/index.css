@@ -36,21 +36,28 @@ body {
 /* Responsive margin for collapsed sidebar */
 @media (max-width: 767px) {
   .main-content {
-    margin-left: 80px; /* 20 * 4 = 80px for w-20 on mobile */
+    margin-left: 64px; /* w-16 trên mobile */
   }
-  
   .main-content.sidebar-collapsed {
-    margin-left: 80px; /* Same as normal on mobile */
+    margin-left: 64px;
+  }
+  .user-main-content {
+    margin-left: 64px;
   }
 }
 
 @media (min-width: 768px) {
   .main-content {
-    margin-left: 256px; /* 64 * 4 = 256px for w-64 on desktop */
+    margin-left: 256px;
   }
-  
   .main-content.sidebar-collapsed {
-    margin-left: 96px; /* 24 * 4 = 96px for md:w-24 on desktop */
+    margin-left: 96px;
+  }
+  .user-main-content {
+    margin-left: 256px;
+  }
+  .user-main-content.sidebar-collapsed {
+    margin-left: 96px;
   }
 }
 

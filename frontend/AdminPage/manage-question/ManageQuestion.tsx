@@ -30,6 +30,7 @@ const ManageQuestion: React.FC<ManageQuestionProps> = ({ courseId }) => {
   const [showQuestionForm, setShowQuestionForm] = useState<{ open: boolean; bankId: string | null }>({ open: false, bankId: null });
   const [showImportExcel, setShowImportExcel] = useState<{ open: boolean; bankId: string | null }>({ open: false, bankId: null });
   const [showQuestionList, setShowQuestionList] = useState<{ open: boolean; bankId: string | null }>({ open: false, bankId: null });
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -58,6 +59,7 @@ const ManageQuestion: React.FC<ManageQuestionProps> = ({ courseId }) => {
   const handleOpenCreate = () => {
     setFormData(courseId ? { ...emptyBank, courseId } : emptyBank);
     setShowCreate(true);
+    setErrorMsg(null);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -66,31 +68,72 @@ const ManageQuestion: React.FC<ManageQuestionProps> = ({ courseId }) => {
       ...prev,
       [name]: value
     }));
+    
     // Nếu chọn courseId thì tự động set courseName
     if (name === 'courseId') {
-      const course = courses.find(c => c.id === value);
-      setFormData(prev => ({ ...prev, courseName: course ? course.name : '' }));
+      console.log('Đang chọn courseId:', value);
+      const selectedCourse = courses.find(c => c.id === value);
+      if (selectedCourse) {
+        console.log('Tìm thấy course:', selectedCourse.name);
+        setFormData(prev => ({ 
+          ...prev, 
+          courseId: value,
+          courseName: selectedCourse.name 
+        }));
+      } else {
+        console.log('Không tìm thấy course với id:', value);
+        setFormData(prev => ({ 
+          ...prev, 
+          courseId: value,
+          courseName: '' 
+        }));
+      }
     }
-    // Nếu chọn courseName thì tự động set courseId
-    if (name === 'courseName') {
-      const course = courses.find(c => c.name === value);
-      setFormData(prev => ({ ...prev, courseId: course && course.id ? course.id : '' }));
-    }
+    
+    // Xóa lỗi khi user thay đổi input
+    setErrorMsg(null);
   };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg(null);
+    
     if (!formData.name || !formData.courseId) {
-      alert('Vui lòng nhập đầy đủ thông tin!');
+      setErrorMsg('Vui lòng nhập đầy đủ thông tin!');
       return;
     }
+    
+    // Kiểm tra trùng tên ngân hàng đề
+    const existingBank = banks.find(bank => 
+      bank.name.toLowerCase().trim() === formData.name.toLowerCase().trim() &&
+      bank.courseId === formData.courseId
+    );
+    
+    if (existingBank) {
+      console.log('Phát hiện trùng tên ngân hàng đề:', {
+        existingBank: existingBank.name,
+        newBank: formData.name,
+        courseId: formData.courseId
+      });
+      setErrorMsg(`Đã tồn tại ngân hàng đề "${formData.name}" cho môn học này. Vui lòng chọn tên khác!`);
+      return;
+    }
+    
     try {
+      console.log('Đang tạo ngân hàng đề:', {
+        name: formData.name,
+        courseId: formData.courseId,
+        courseName: formData.courseName,
+        description: formData.description
+      });
+      
       await createQuestionBank(formData);
+      console.log('Tạo ngân hàng đề thành công');
       setShowCreate(false);
       await loadData();
     } catch (err) {
       console.error('Lỗi khi tạo ngân hàng đề:', err);
-      alert('Lỗi khi tạo ngân hàng đề!');
+      setErrorMsg('Lỗi khi tạo ngân hàng đề! Vui lòng thử lại.');
     }
   };
 
@@ -113,11 +156,7 @@ const ManageQuestion: React.FC<ManageQuestionProps> = ({ courseId }) => {
     }
   };
 
-  // Thống kê số lượng đề thi sử dụng mỗi ngân hàng đề
-  const statsByBank = banks.map(bank => ({
-    bank,
-    partCount: parts.filter(p => p.questionBankId === bank.id).length,
-  }));
+
 
   return (
     <div className="relative min-h-screen bg-slate-50 p-6">
@@ -159,15 +198,15 @@ const ManageQuestion: React.FC<ManageQuestionProps> = ({ courseId }) => {
       {loading ? (
         <div className="text-center text-slate-500">Đang tải...</div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 mt-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-8 mt-4 sm:mt-8">
           {banks.length === 0 ? (
-            <div className="col-span-full flex flex-col items-center text-gray-400 mt-16">
+            <div className="col-span-full flex flex-col items-center text-gray-400 mt-8 sm:mt-16">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2a4 4 0 018 0v2m-4-4v4m0 0v4m0-4h4m-4 0H7" /></svg>
               <span className="text-lg">Chưa có ngân hàng đề nào</span>
             </div>
           ) : (
             banks.map(bank => (
-              <div key={bank.id} className="bg-white rounded-2xl shadow-lg p-6 flex flex-col min-h-[220px] transition-transform hover:scale-105 hover:shadow-2xl border border-slate-100 relative">
+              <div key={bank.id} className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 flex flex-col min-h-[180px] sm:min-h-[220px] transition-transform hover:scale-105 hover:shadow-2xl border border-slate-100 relative">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="bg-green-100 text-green-600 rounded-full p-2">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zm0 0V4m0 7v7" /></svg>
@@ -208,21 +247,56 @@ const ManageQuestion: React.FC<ManageQuestionProps> = ({ courseId }) => {
             <button className="absolute top-2 right-2 text-slate-400 hover:text-slate-700" onClick={() => setShowCreate(false)}>&times;</button>
             <h2 className="text-2xl font-bold mb-4">Tạo ngân hàng đề</h2>
             <form onSubmit={handleCreate} className="space-y-4">
-              <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="Tên ngân hàng đề" className="w-full px-3 py-2 border rounded" required />
+              <input 
+                type="text" 
+                name="name" 
+                value={formData.name} 
+                onChange={handleChange} 
+                placeholder="Tên ngân hàng đề" 
+                className="w-full px-3 py-2 border rounded" 
+                required 
+              />
               {courseId ? (
                 <div className="w-full px-3 py-2 border rounded bg-slate-100 text-slate-700">
                   {courses.find(c => c.id === courseId)?.name || 'Môn học hiện tại'}
                 </div>
               ) : (
-                <select name="courseId" value={formData.courseId} onChange={handleChange} className="w-full px-3 py-2 border rounded" required>
+                <select 
+                  name="courseId" 
+                  value={formData.courseId} 
+                  onChange={handleChange} 
+                  className="w-full px-3 py-2 border rounded" 
+                  required
+                >
                   <option value="">Chọn môn học</option>
                   {courses.map(course => (
                     <option key={course.id} value={course.id}>{course.name} ({course.code})</option>
                   ))}
                 </select>
               )}
-              <input type="text" name="courseName" value={formData.courseName} onChange={handleChange} placeholder="Tên môn học" className="w-full px-3 py-2 border rounded" required />
-              <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Mô tả" className="w-full px-3 py-2 border rounded" />
+              
+              {/* Hiển thị tên môn học đã chọn */}
+              {formData.courseName && (
+                <div className="w-full px-3 py-2 border rounded bg-slate-50 text-slate-700">
+                  <span className="text-sm text-slate-500">Môn học:</span> {formData.courseName}
+                </div>
+              )}
+              
+              <textarea 
+                name="description" 
+                value={formData.description} 
+                onChange={handleChange} 
+                placeholder="Mô tả" 
+                className="w-full px-3 py-2 border rounded" 
+              />
+              
+              {/* Hiển thị lỗi */}
+              {errorMsg && (
+                <div className="text-red-500 text-sm bg-red-50 p-3 rounded border border-red-200">
+                  {errorMsg}
+                </div>
+              )}
+              
               <div className="flex justify-end gap-2">
                 <button type="button" className="px-4 py-2 bg-slate-200 rounded" onClick={() => setShowCreate(false)}>Hủy</button>
                 <button type="submit" className="px-4 py-2 bg-sky-600 text-white rounded hover:bg-sky-700">Tạo</button>
@@ -266,15 +340,7 @@ const ManageQuestion: React.FC<ManageQuestionProps> = ({ courseId }) => {
         />
       )}
 
-      <div className="p-6">
-        <div className="mb-4 flex flex-wrap gap-4">
-          {statsByBank.map(stat => (
-            <div key={stat.bank.id} className="bg-slate-100 rounded px-4 py-2 text-sm">
-              <span className="font-semibold">{stat.bank.name}:</span> {stat.bank.totalQuestions || 0} câu hỏi, {stat.partCount} đề thi sử dụng
-            </div>
-          ))}
-        </div>
-      </div>
+
     </div>
   );
 };

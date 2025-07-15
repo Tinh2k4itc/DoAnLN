@@ -62,7 +62,7 @@ const UserCourseTests: React.FC<{ courseId: string }> = ({ courseId }) => {
           <p className="text-slate-500">Môn học này chưa có bài thi nào được tạo.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           {parts.map(part => (
             <TestCard
               key={part.id}

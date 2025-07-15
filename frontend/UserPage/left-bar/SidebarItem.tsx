@@ -24,8 +24,8 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ item, isActive, isExpanded, o
   const IconComponent = item.icon;
 
   const baseClasses = "flex items-center rounded-lg my-0.5 md:my-1 transition-all duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-opacity-75";
-  const expandedClasses = `w-full px-3 py-2.5 justify-start text-sm ${isActive ? 'bg-sky-600 text-white font-medium shadow-md' : 'text-slate-300 hover:bg-slate-700/60 hover:text-sky-300 focus-visible:bg-slate-700/60 focus-visible:text-sky-300'}`;
-  const collapsedClasses = `w-12 h-12 md:w-14 md:h-14 justify-center relative group ${isActive ? 'bg-sky-600 text-white shadow-md scale-105' : 'text-slate-400 hover:bg-slate-700 hover:text-sky-400 focus-visible:bg-slate-700 focus-visible:text-sky-400'}`;
+  const expandedClasses = `w-full px-2 sm:px-3 py-2 sm:py-2.5 justify-start text-xs sm:text-sm ${isActive ? 'bg-sky-600 text-white font-medium shadow-md' : 'text-slate-300 hover:bg-slate-700/60 hover:text-sky-300 focus-visible:bg-slate-700/60 focus-visible:text-sky-300'}`;
+  const collapsedClasses = `w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 justify-center relative group ${isActive ? 'bg-sky-600 text-white shadow-md scale-105' : 'text-slate-400 hover:bg-slate-700 hover:text-sky-400 focus-visible:bg-slate-700 focus-visible:text-sky-400'}`;
 
   return (
     <div className={isExpanded ? 'w-full' : 'relative'}>
@@ -35,7 +35,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ item, isActive, isExpanded, o
         aria-current={isActive ? 'page' : undefined}
         className={`${baseClasses} ${isExpanded ? expandedClasses : collapsedClasses}`}
       >
-        <IconComponent className={`flex-shrink-0 ${isExpanded ? 'w-5 h-5' : 'w-5 h-5 md:w-6 md:h-6'}`} />
+        <IconComponent className={`flex-shrink-0 w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6`} />
         {isExpanded && <span className="ml-3 truncate">{item.label}</span>}
       </button>
       {!isExpanded && (

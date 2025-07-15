@@ -296,7 +296,6 @@ const ExamResults: React.FC<ExamResultsProps> = ({ courseId }) => {
                 <td className="max-w-xs">
                   <div className="font-semibold">{getUserName(r.userName)}</div>
                   {r.userEmail && <div className="text-xs text-slate-600">Email: {r.userEmail}</div>}
-                  {r.userStudentId && <div className="text-xs text-slate-600">MSSV: {r.userStudentId}</div>}
                 </td>
                 <td>{getTestName(r.testName)}</td>
                 <td className="text-center font-bold">{r.score}</td>
@@ -368,12 +367,6 @@ const ExamResults: React.FC<ExamResultsProps> = ({ courseId }) => {
                 <div className="bg-blue-50 rounded-xl p-4">
                   <div className="font-semibold">Email:</div>
                   <div className="text-blue-700">{showDetail.userEmail}</div>
-                </div>
-              )}
-              {showDetail.userStudentId && (
-                <div className="bg-purple-50 rounded-xl p-4">
-                  <div className="font-semibold">Mã sinh viên:</div>
-                  <div className="text-purple-700">{showDetail.userStudentId}</div>
                 </div>
               )}
             </div>

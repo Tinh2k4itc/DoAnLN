@@ -9,14 +9,14 @@ const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navLinks = [
-    { href: '#', text: 'Home' },
-    { href: '#', text: 'Take Quiz' },
+    { href: '#', text: 'Trang chủ' },
+    { href: '#', text: 'Làm bài' },
   ];
 
   return (
     <nav className="bg-white shadow-md sticky top-0 z-50">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+      <div className="container mx-auto px-2 sm:px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-12 sm:h-16">
           {/* Logo/App Name */}
           <div className="flex-shrink-0">
             <a href="#" className="text-2xl font-bold text-sky-600 hover:text-sky-700 transition-colors">
@@ -42,16 +42,16 @@ const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
             <button
               onClick={onAuthClick}
               className="text-slate-600 hover:text-sky-600 px-3 py-2 rounded-md text-sm font-medium transition-colors border border-slate-300 hover:border-sky-500"
-              aria-label="Login"
+              aria-label="Đăng nhập"
             >
-              Login
+              Đăng nhập
             </button>
             <button
               onClick={onAuthClick}
               className="bg-sky-500 text-white hover:bg-sky-600 px-4 py-2 rounded-md text-sm font-medium transition-colors"
-              aria-label="Register"
+              aria-label="Đăng ký"
             >
-              Register
+              Đăng ký
             </button>
           </div>
 
@@ -98,17 +98,17 @@ const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
                 href="#"
                 onClick={(e) => { e.preventDefault(); onAuthClick(); }}
                 className="text-slate-600 hover:bg-sky-50 hover:text-sky-600 block px-3 py-2 rounded-md text-base font-medium transition-colors"
-                aria-label="Login"
+                aria-label="Đăng nhập"
               >
-                Login
+                Đăng nhập
               </a>
               <a
                 href="#"
                 onClick={(e) => { e.preventDefault(); onAuthClick(); }}
                 className="text-slate-600 hover:bg-sky-50 hover:text-sky-600 block px-3 py-2 rounded-md text-base font-medium transition-colors"
-                aria-label="Register"
+                aria-label="Đăng ký"
               >
-                Register
+                Đăng ký
               </a>
             </div>
           </div>

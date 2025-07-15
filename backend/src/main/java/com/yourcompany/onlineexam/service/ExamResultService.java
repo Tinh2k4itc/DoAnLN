@@ -138,7 +138,9 @@ public class ExamResultService {
                 submittedDetail.setPoint(point);
                 if (isCorrect) totalScore += point;
             }
-            result.setScore(totalScore);
+            // Làm tròn thông thường 1 chữ số thập phân
+            double roundedScore = Math.round(totalScore * 10.0) / 10.0;
+            result.setScore(roundedScore);
             Firestore db = FirestoreClient.getFirestore();
             java.util.Map<String, Object> data = new java.util.HashMap<>();
             data.put("userName", result.getUserName());
@@ -269,7 +271,9 @@ public class ExamResultService {
             }
 
             // Cập nhật tổng điểm
-            result.setScore(totalScore);
+            // Làm tròn thông thường 1 chữ số thập phân
+            double roundedScore = Math.round(totalScore * 10.0) / 10.0;
+            result.setScore(roundedScore);
             
             // Lưu vào Firebase
             try {

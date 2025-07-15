@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import AuthForm from './AuthPage/AuthForm';
 import AdminForm from "./AdminPage/AdminFrom";
 import UserPage from "./UserPage/UserPage";
@@ -9,6 +9,10 @@ import { doc, getDoc } from "firebase/firestore";
 import AdminCourseManagerPage from './AdminPage/manage-course/AdminCourseManagerPage';
 import ManageStudentPage from './AdminPage/manage-course/course-student/ManageStudentPage';
 import MyCourseDetailPage from './UserPage/my-course/MyCourseDetailPage';
+import FeatureSection from './Homepage/FeatureSection';
+import HeroSection from './Homepage/HeroSection';
+import Navbar from './Homepage/Navbar';
+import Footer from './Homepage/Footer';
 
 // Hook kiểm tra user đăng nhập & role
 export function useAuthRole() {
@@ -54,10 +58,23 @@ function LoginRoute() {
   );
 }
 
+function HomePage() {
+  const navigate = useNavigate();
+  return (
+    <div className="min-h-screen flex flex-col bg-slate-50">
+      <Navbar onAuthClick={() => navigate('/login')} />
+      <HeroSection />
+      <FeatureSection />
+      <Footer />
+    </div>
+  );
+}
+
 const App: React.FC = () => {
   return (
     <Router>
       <Routes>
+        <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginRoute />} />
         <Route path="/admin" element={
           <ProtectedRoute requireRole="admin">

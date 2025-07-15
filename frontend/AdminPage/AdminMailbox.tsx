@@ -216,11 +216,11 @@ const AdminMailbox: React.FC = () => {
               <p className="text-sm">Hiện tại chỉ có bạn trong hệ thống</p>
             </div>
           ) : (
-            <div className="grid gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               {users.map((user) => (
                 <div
                   key={user.uid}
-                  className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                  className="flex items-center justify-between p-3 sm:p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
                 >
                   <div className="flex items-center space-x-3">
                     <img

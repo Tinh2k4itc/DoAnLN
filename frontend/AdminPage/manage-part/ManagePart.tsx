@@ -418,9 +418,9 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
       {loading ? (
         <div className="text-center text-slate-500">Đang tải...</div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8 mt-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8 mt-4 sm:mt-8">
           {parts.length === 0 ? (
-            <div className="col-span-full flex flex-col items-center text-gray-400 mt-16">
+            <div className="col-span-full flex flex-col items-center text-gray-400 mt-8 sm:mt-16">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2a4 4 0 018 0v2m-4-4v4m0 0v4m0-4h4m-4 0H7" /></svg>
               <span className="text-lg">Chưa có bài thi nào</span>
             </div>
@@ -434,7 +434,7 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
               return (
                 <div
                   key={part.id}
-                  className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 flex flex-col min-h-[220px] transition-transform hover:scale-105 hover:shadow-2xl border border-slate-100 relative overflow-x-auto"
+                  className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 flex flex-col min-h-[180px] sm:min-h-[220px] transition-transform hover:scale-105 hover:shadow-2xl border border-slate-100 relative overflow-x-auto"
                 >
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 mb-2">
                     <div className="bg-sky-100 text-sky-600 rounded-full p-2 w-fit mx-auto sm:mx-0">
@@ -727,38 +727,6 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
                       ))}
                     </ul>
                   )}
-                  <div className="mt-4 flex gap-2">
-                    <button className="px-4 py-2 bg-sky-600 text-white rounded" type="button" onClick={async () => {
-                      if (!showView.part || !showView.part.questions || showView.part.score === undefined) return;
-                      let newQuestions = showView.part.questions;
-                      if (scoringMode === 'manual') {
-                        const total = Number(Object.values(manualScores).reduce((a:any, b:any) => a + (parseFloat(b as string) || 0), 0));
-                        if (Math.abs(total - showView.part.score) > 0.01) {
-                          setScoreError(`Tổng điểm các câu hỏi (${total}) phải bằng tổng điểm bài thi (${showView.part.score})`);
-                          return;
-                        } else {
-                          setScoreError('');
-                        }
-                      }
-                      newQuestions = calculateScores(showView.part.questions || [], showView.part.score, scoringMode, manualScores);
-                      await updatePart(String(showView.part.id), { ...showView.part, questions: newQuestions, scoringMode });
-                      setShowView({ ...showView, part: { ...showView.part, questions: newQuestions, scoringMode } });
-                      alert('Cập nhật cơ chế tính điểm thành công!');
-                    }}>
-                      Lưu cơ chế tính điểm
-                    </button>
-                    <div className="flex justify-end gap-2 mt-6">
-                      <button className="px-4 py-2 bg-green-600 text-white rounded font-bold" type="button" onClick={async () => {
-                        if (!showView.part || !showView.part.questions || showView.part.score === undefined) return;
-                        const newQuestions = calculateScores(showView.part.questions, showView.part.score, scoringMode, manualScores);
-                        await updatePart(String(showView.part.id), { ...showView.part, scoringMode, questions: newQuestions });
-                        setShowView({ ...showView, part: { ...showView.part, questions: newQuestions, scoringMode } });
-                        alert('Lưu đề thi thành công!');
-                      }}>
-                        Lưu đề thi
-                      </button>
-                    </div>
-                  </div>
                   <div className="flex justify-end gap-2 mt-4">
                     <button type="button" className="px-4 py-2 bg-slate-200 rounded" onClick={()=>setStep(2)}>Quay lại</button>
                     <button type="submit" className="px-4 py-2 bg-sky-600 text-white rounded hover:bg-sky-700">Lưu bài thi</button>
