@@ -12,7 +12,7 @@ import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequestMapping("/api/question-banks")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "https://doanliennganh.vercel.app")
 public class QuestionBankController {
     private final QuestionBankService questionBankService;
     private static final Logger logger = LoggerFactory.getLogger(QuestionBankController.class);

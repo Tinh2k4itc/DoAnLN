@@ -12,7 +12,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/exam-results")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "https://doanliennganh.vercel.app")
 public class ExamResultController {
     @Autowired
     private ExamResultService examResultService;

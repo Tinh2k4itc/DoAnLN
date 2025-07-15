@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => {
       },
       server: {
         proxy: {
-          '/api': 'http://localhost:8080'
+          '/api': 'https://doanln.onrender.com'
         }
       }
     };

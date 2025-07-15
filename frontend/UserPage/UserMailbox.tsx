@@ -35,7 +35,7 @@ const UserMailbox: React.FC<UserMailboxProps> = ({ onUnreadCountChange }) => {
           setCurrentUser(user);
           
           // Lấy danh sách users từ API
-          const response = await axios.get('http://localhost:8080/api/users/all');
+          const response = await axios.get('https://doanln.onrender.com/api/users/all');
           const allUsers = response.data.map((u: any) => ({
             uid: u.uid,
             email: u.email,

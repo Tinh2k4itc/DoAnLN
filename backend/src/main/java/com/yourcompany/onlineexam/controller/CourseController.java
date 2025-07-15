@@ -14,7 +14,7 @@ import java.util.concurrent.ExecutionException;
 
 @RestController()
 @RequestMapping("/api/courses")
-@CrossOrigin(origins = "http://localhost:5173") // Cho phép frontend gọi API
+@CrossOrigin(origins = "https://doanliennganh.vercel.app") // Cho phép frontend gọi API
 public class CourseController {
 
     private final CourseService courseService;

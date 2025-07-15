@@ -16,7 +16,7 @@ const SystemSettings: React.FC = () => {
   const [status, setStatus] = useState('');
 
   useEffect(() => {
-    axios.get('http://localhost:8080/api/settings').then(res => setSettings({ ...defaultSettings, ...res.data }));
+    axios.get('https://doanln.onrender.com/api/settings').then(res => setSettings({ ...defaultSettings, ...res.data }));
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -33,7 +33,7 @@ const SystemSettings: React.FC = () => {
 
   const handleSave = async () => {
     try {
-      await axios.post('http://localhost:8080/api/settings', settings);
+      await axios.post('https://doanln.onrender.com/api/settings', settings);
       setStatus('Đã lưu cài đặt!');
     } catch (err: any) {
       setStatus('Lưu cài đặt thất bại: ' + (err?.message || err));

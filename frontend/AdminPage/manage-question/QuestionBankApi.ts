@@ -12,7 +12,7 @@ export interface QuestionBank {
   hardCount?: number;
 }
 
-const API_URL = 'http://localhost:8080/api/question-banks';
+const API_URL = 'https://doanln.onrender.com/api/question-banks';
 
 export const fetchQuestionBanks = async (search?: string, courseId?: string): Promise<QuestionBank[]> => {
   const params: any = {};

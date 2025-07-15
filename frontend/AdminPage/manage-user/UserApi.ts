@@ -11,7 +11,7 @@ export interface User {
   isDeleted?: boolean;
 }
 
-const API_URL = 'http://localhost:8080/api/users';
+const API_URL = 'https://doanln.onrender.com/api/users';
 
 export const fetchUsers = async (): Promise<User[]> => {
   const res = await axios.get<User[]>(API_URL);

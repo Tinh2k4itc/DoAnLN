@@ -35,13 +35,13 @@ const TestCard: React.FC<TestCardProps> = ({ part, onStartTest, onViewResults })
         
         // Lấy số lượt thi đã sử dụng
         const attemptCountResponse = await axios.get(
-          `http://localhost:8080/api/exam-results/attempt-count/${encodeURIComponent(userName)}/${encodeURIComponent(part.id!)}`
+          `https://doanln.onrender.com/api/exam-results/attempt-count/${encodeURIComponent(userName)}/${encodeURIComponent(part.id!)}`
         );
         const attemptCount = attemptCountResponse.data;
 
         // Kiểm tra có thể thi không
         const canTakeResponse = await axios.get(
-          `http://localhost:8080/api/exam-results/can-take-test/${encodeURIComponent(userName)}/${encodeURIComponent(part.id!)}/${part.maxRetake || 1}`
+          `https://doanln.onrender.com/api/exam-results/can-take-test/${encodeURIComponent(userName)}/${encodeURIComponent(part.id!)}/${part.maxRetake || 1}`
         );
         const canTake = canTakeResponse.data;
 
@@ -51,7 +51,7 @@ const TestCard: React.FC<TestCardProps> = ({ part, onStartTest, onViewResults })
         
         if (attemptCount > 0) {
           try {
-            const resultsResponse = await axios.get('http://localhost:8080/api/exam-results');
+            const resultsResponse = await axios.get('https://doanln.onrender.com/api/exam-results');
             const userResults = resultsResponse.data.filter((result: any) => 
               result.userName === userName && result.testName === part.id
             );

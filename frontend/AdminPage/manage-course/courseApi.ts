@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // Định nghĩa base URL cho API backend
-const API_URL = 'http://localhost:8080/api/courses';
+const API_URL = 'https://doanln.onrender.com/api/courses';
 
 // Interface cho Course
 export interface Course {

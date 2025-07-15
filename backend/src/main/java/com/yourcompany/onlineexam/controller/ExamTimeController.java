@@ -10,7 +10,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/exam-time")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "https://doanliennganh.vercel.app")
 public class ExamTimeController {
     private final ExamTimeService examTimeService;
     private static final Logger logger = LoggerFactory.getLogger(ExamTimeController.class);

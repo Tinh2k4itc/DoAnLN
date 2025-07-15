@@ -25,7 +25,7 @@ const Notification: React.FC = () => {
 
   useEffect(() => {
     // Lấy danh sách lớp/môn học từ backend
-    axios.get<Group[]>('http://localhost:8080/api/notification-groups').then(res => setGroups(res.data));
+    axios.get<Group[]>('https://doanln.onrender.com/api/notification-groups').then(res => setGroups(res.data));
 
     const violationsRef = ref(realtimeDb, 'exam-violations');
     const handle = onValue(violationsRef, (snapshot) => {
@@ -100,7 +100,7 @@ const Notification: React.FC = () => {
       return;
     }
     try {
-      await axios.post('http://localhost:8080/api/notifications', {
+      await axios.post('https://doanln.onrender.com/api/notifications', {
         message,
         targets: target,
       });

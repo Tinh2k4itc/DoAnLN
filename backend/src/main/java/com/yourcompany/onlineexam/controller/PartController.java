@@ -12,7 +12,7 @@ import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequestMapping("/api/parts")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "https://doanliennganh.vercel.app")
 public class PartController {
     private final PartService partService;
     private static final Logger logger = LoggerFactory.getLogger(PartController.class);

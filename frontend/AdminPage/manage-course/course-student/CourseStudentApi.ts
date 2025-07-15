@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:8080/api/courses";
+const API_BASE = "https://doanln.onrender.com/api/courses";
 
 export async function getStudents(courseId: string): Promise<string[]> {
   const res = await fetch(`${API_BASE}/${courseId}/students`);

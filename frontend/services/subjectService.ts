@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:8080/api/subjects";
+const API_URL = "https://doanln.onrender.com/api/subjects";
 
 export interface Subject {
     id: string;

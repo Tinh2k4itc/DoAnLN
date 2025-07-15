@@ -18,7 +18,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/questions")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "https://doanliennganh.vercel.app")
 public class QuestionController {
     private final QuestionService questionService;
     private static final Logger logger = LoggerFactory.getLogger(QuestionController.class);

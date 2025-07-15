@@ -38,7 +38,7 @@ const TestNotification: React.FC<TestNotificationProps> = ({ onClose }) => {
     setResult(null);
 
     try {
-      const response = await fetch('http://localhost:8080/api/test/notification', {
+      const response = await fetch('https://doanln.onrender.com/api/test/notification', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -63,7 +63,7 @@ const TestNotification: React.FC<TestNotificationProps> = ({ onClose }) => {
     try {
       const userIds = multipleData.userIds.split(',').map(id => id.trim()).filter(id => id);
       
-      const response = await fetch('http://localhost:8080/api/test/notification-multiple', {
+      const response = await fetch('https://doanln.onrender.com/api/test/notification-multiple', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -91,7 +91,7 @@ const TestNotification: React.FC<TestNotificationProps> = ({ onClose }) => {
     try {
       const studentIds = examData.studentIds.split(',').map(id => id.trim()).filter(id => id);
       
-      const response = await fetch('http://localhost:8080/api/test/exam-notification', {
+      const response = await fetch('https://doanln.onrender.com/api/test/exam-notification', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

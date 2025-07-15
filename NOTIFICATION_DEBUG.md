@@ -53,7 +53,7 @@ Sử dụng Postman hoặc curl để test API:
 
 #### Test single notification:
 ```bash
-curl -X POST http://localhost:8080/api/test/notification \
+curl -X POST https://doanln.onrender.com/api/test/notification \
   -H "Content-Type: application/json" \
   -d '{
     "userId": "test_user_id",
@@ -65,7 +65,7 @@ curl -X POST http://localhost:8080/api/test/notification \
 
 #### Test exam notification:
 ```bash
-curl -X POST http://localhost:8080/api/test/exam-notification \
+curl -X POST https://doanln.onrender.com/api/test/exam-notification \
   -H "Content-Type: application/json" \
   -d '{
     "examName": "Bài thi Test",

@@ -13,7 +13,7 @@ export interface Test {
   questionBankId?: string;
 }
 
-const API_URL = 'http://localhost:8080/api/parts';
+const API_URL = 'https://doanln.onrender.com/api/parts';
 
 export const fetchTests = async (search?: string): Promise<Test[]> => {
   const params = search ? { params: { search } } : {};

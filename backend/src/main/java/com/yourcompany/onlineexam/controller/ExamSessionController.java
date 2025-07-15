@@ -12,7 +12,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/exam-session")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "https://doanliennganh.vercel.app")
 public class ExamSessionController {
     private final ExamSessionService examSessionService;
     private static final Logger logger = LoggerFactory.getLogger(ExamSessionController.class);

@@ -20,8 +20,8 @@ const UserCourseResults: React.FC<{ courseId: string }> = ({ courseId }) => {
   useEffect(() => {
     if (!user) return;
     const fetchData = async () => {
-      const res = await axios.get('http://localhost:8080/api/exam-results');
-      const partRes = await axios.get('http://localhost:8080/api/parts');
+      const res = await axios.get('https://doanln.onrender.com/api/exam-results');
+      const partRes = await axios.get('https://doanln.onrender.com/api/parts');
       setParts(partRes.data);
       // Lọc kết quả của user theo userEmail và chỉ hiển thị nếu part cho phép xem lại đáp án
       const myResults = res.data.filter((r:any) => {

@@ -14,7 +14,7 @@ export interface ExamResult {
   leaveScreenCount?: number;
 }
 
-const API_URL = 'http://localhost:8080/api/exam-results';
+const API_URL = 'https://doanln.onrender.com/api/exam-results';
 
 export const fetchExamResults = async (): Promise<ExamResult[]> => {
   const response = await axios.get<ExamResult[]>(API_URL);
