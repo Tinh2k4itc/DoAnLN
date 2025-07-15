@@ -325,8 +325,8 @@ const AuthForm: React.FC<AuthFormProps> = ({ onClose }) => {
   return (
     <div className="bg-white w-[900px] max-w-[95vw] min-h-[550px] sm:h-[550px] rounded-2xl shadow-2xl relative overflow-hidden">
       <button
-        className="absolute top-4 right-4 text-2xl text-slate-400 hover:text-slate-700"
-        onClick={() => { onClose(); navigate('/'); }}
+        className="absolute top-4 right-4 text-2xl text-slate-400 hover:text-slate-700 z-50"
+        onClick={() => navigate('/')}
         aria-label="Đóng"
       >
         &times;
@@ -334,16 +334,16 @@ const AuthForm: React.FC<AuthFormProps> = ({ onClose }) => {
 
       {/* Sign Up Form Panel */}
       <div className={`${signUpFormBaseClasses} ${signUpFormDynamicClasses}`}>
-        <h1 className="text-3xl font-bold text-indigo-600 mb-6">Create Account</h1>
+        <h1 className="text-3xl font-bold text-indigo-600 mb-6">Tạo tài khoản</h1>
         <form onSubmit={handleSignUpSubmit} className="w-full max-w-xs">
           <InputField
             type="text"
-            placeholder="Username"
+            placeholder="Tên người dùng"
             required
             icon={<UserIcon className={commonIconClass} />}
             value={signUpUsername}
             onChange={e => setSignUpUsername(e.target.value)}
-            aria-label="Username"
+            aria-label="Tên người dùng"
           />
           <InputField
             type="email"
@@ -356,21 +356,21 @@ const AuthForm: React.FC<AuthFormProps> = ({ onClose }) => {
           />
           <InputField
             type="password"
-            placeholder="Password"
+            placeholder="Mật khẩu"
             required
             icon={<LockIcon className={commonIconClass} />}
             value={signUpPassword}
             onChange={e => setSignUpPassword(e.target.value)}
-            aria-label="Password"
+            aria-label="Mật khẩu"
           />
           <InputField
             type="password"
-            placeholder="Confirm Password"
+            placeholder="Xác nhận mật khẩu"
             required
             icon={<LockIcon className={commonIconClass} />}
             value={signUpConfirmPassword}
             onChange={e => setSignUpConfirmPassword(e.target.value)}
-            aria-label="Confirm Password"
+            aria-label="Xác nhận mật khẩu"
           />
           
           {/* Chọn role */}
@@ -409,18 +409,18 @@ const AuthForm: React.FC<AuthFormProps> = ({ onClose }) => {
             disabled={isLoading}
             className="w-full bg-indigo-500 text-white py-3 rounded-lg font-semibold hover:bg-indigo-600 transition-colors mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'Đang đăng ký...' : 'Sign Up'}
+            {isLoading ? 'Đang đăng ký...' : 'Đăng ký'}
           </button>
         </form>
         {errorMsg && <div className="text-red-500 mt-2 text-sm">{errorMsg}</div>}
         {successMsg && <div className="text-green-500 mt-2 text-sm">{successMsg}</div>}
-        <p className="text-gray-500 text-sm mt-6 mb-3">or sign up with</p>
+        <p className="text-gray-500 text-sm mt-6 mb-3">hoặc đăng ký bằng</p>
         <SocialIcons onGoogleSignIn={handleGoogleSignIn} onGithubSignIn={handleGithubSignIn} />
       </div>
 
       {/* Sign In Form Panel */}
       <div className={`${signInFormBaseClasses} ${signInFormDynamicClasses}`}>
-        <h1 className="text-3xl font-bold text-indigo-600 mb-6">Sign In</h1>
+        <h1 className="text-3xl font-bold text-indigo-600 mb-6">Đăng nhập</h1>
         <form onSubmit={handleSignInSubmit} className="w-full max-w-xs">
           <InputField
             type="email"
@@ -433,12 +433,12 @@ const AuthForm: React.FC<AuthFormProps> = ({ onClose }) => {
           />
           <InputField
             type="password"
-            placeholder="Password"
+            placeholder="Mật khẩu"
             required
             icon={<LockIcon className={commonIconClass} />}
             value={signInPassword}
             onChange={e => setSignInPassword(e.target.value)}
-            aria-label="Password"
+            aria-label="Mật khẩu"
           />
           
           {/* Chức năng quên mật khẩu */}
@@ -448,7 +448,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onClose }) => {
               onClick={() => setShowForgotPassword(true)}
               className="text-xs text-gray-500 hover:text-indigo-500 my-3 block"
             >
-              Forgot your password?
+              Quên mật khẩu?
             </button>
           ) : (
             <div className="my-3 p-3 bg-gray-50 rounded-lg">
@@ -485,41 +485,41 @@ const AuthForm: React.FC<AuthFormProps> = ({ onClose }) => {
             disabled={isLoading}
             className="w-full bg-indigo-500 text-white py-3 rounded-lg font-semibold hover:bg-indigo-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'Đang đăng nhập...' : 'Sign In'}
+            {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
           </button>
         </form>
         {errorMsg && <div className="text-red-500 mt-2 text-sm">{errorMsg}</div>}
         {successMsg && <div className="text-green-500 mt-2 text-sm">{successMsg}</div>}
-        <p className="text-gray-500 text-sm mt-6 mb-3">or sign in with</p>
+        <p className="text-gray-500 text-sm mt-6 mb-3">hoặc đăng nhập bằng</p>
         <SocialIcons onGoogleSignIn={handleGoogleSignIn} onGithubSignIn={handleGithubSignIn} />
       </div>
 
       {/* Overlay Container */}
       <div className={`${overlayBaseClasses} ${overlayDynamicClasses}`}>
         <div className={signInPromptTextClasses}>
-          <h2 className="text-3xl font-bold mb-3">Hello, Friend!</h2>
+          <h2 className="text-3xl font-bold mb-3">Xin chào bạn!</h2>
           <p className="text-sm mb-6 leading-relaxed max-w-xs">
-            Enter your personal details and start your journey with us
+            Nhập thông tin cá nhân để bắt đầu hành trình cùng chúng tôi
           </p>
           <button
             onClick={() => handleTogglePanel('signUp')}
             disabled={isAnimating}
             className="px-8 py-3 border-2 border-white rounded-lg font-semibold hover:bg-white hover:text-indigo-500 transition-all duration-300 disabled:opacity-50"
           >
-            Sign Up
+            Đăng ký
           </button>
         </div>
         <div className={signUpPromptTextClasses}>
-          <h2 className="text-3xl font-bold mb-3">Welcome Back!</h2>
+          <h2 className="text-3xl font-bold mb-3">Chào mừng trở lại!</h2>
           <p className="text-sm mb-6 leading-relaxed max-w-xs">
-            To keep connected with us please login with your personal info
+            Để tiếp tục kết nối, vui lòng đăng nhập bằng thông tin cá nhân của bạn
           </p>
           <button
             onClick={() => handleTogglePanel('signIn')}
             disabled={isAnimating}
             className="px-8 py-3 border-2 border-white rounded-lg font-semibold hover:bg-white hover:text-indigo-500 transition-all duration-300 disabled:opacity-50"
           >
-            Sign In
+            Đăng nhập
           </button>
         </div>
       </div>

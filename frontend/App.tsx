@@ -51,9 +51,10 @@ function ProtectedRoute({ children, requireRole }: { children: React.ReactNode; 
 }
 
 function LoginRoute() {
+  const navigate = useNavigate();
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
-      <AuthForm onClose={() => {}} />
+      <AuthForm onClose={() => navigate('/')} />
     </div>
   );
 }
