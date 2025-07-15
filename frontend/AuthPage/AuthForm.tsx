@@ -160,7 +160,6 @@ const AuthForm: React.FC<AuthFormProps> = ({ onClose }) => {
       } else {
         navigate('/user');
       }
-      onClose();
     } catch (error: any) {
       const errorMessage = getErrorMessage(error);
       setErrorMsg(errorMessage);
@@ -203,7 +202,6 @@ const AuthForm: React.FC<AuthFormProps> = ({ onClose }) => {
       } else {
         navigate('/user');
       }
-      onClose();
     } catch (error: any) {
       const errorMessage = getErrorMessage(error);
       setErrorMsg(errorMessage);
@@ -246,7 +244,6 @@ const AuthForm: React.FC<AuthFormProps> = ({ onClose }) => {
       } else {
         navigate('/user');
       }
-      onClose();
     } catch (error: any) {
       const errorMessage = getErrorMessage(error);
       setErrorMsg(errorMessage);
