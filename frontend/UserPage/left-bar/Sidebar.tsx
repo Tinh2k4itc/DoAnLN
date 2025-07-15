@@ -37,8 +37,6 @@ import {
 
 const mainNavItems: SidebarItemInfo[] = [
   { id: 'my-courses', label: 'Khóa học của tôi', icon: AcademicCapIcon },
-  { id: 'my-assignments', label: 'Bài tập của tôi', icon: DocumentTextIcon },
-  { id: 'my-grades', label: 'Điểm số của tôi', icon: ChartBarIcon },
 ];
 
 const accountNavItems: SidebarItemInfo[] = [
