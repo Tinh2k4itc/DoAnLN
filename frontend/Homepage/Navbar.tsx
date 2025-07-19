@@ -9,8 +9,8 @@ const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navLinks = [
-    { href: '#', text: 'Trang chủ' },
-    { href: '#', text: 'Làm bài' },
+    { href: 'https://doanliennganh.vercel.app/', text: 'Trang chủ' },
+    { href: 'https://doanliennganh.vercel.app/login', text: 'Làm bài' },
   ];
 
   return (
