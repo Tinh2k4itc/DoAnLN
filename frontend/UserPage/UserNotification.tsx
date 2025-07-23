@@ -7,7 +7,11 @@ import { vi } from 'date-fns/locale';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-const UserNotification: React.FC = () => {
+interface UserNotificationProps {
+  onUnreadCountChange?: (count: number) => void;
+}
+
+const UserNotification: React.FC<UserNotificationProps> = ({ onUnreadCountChange }) => {
   const [notifications, setNotifications] = useState<NotificationType[]>([]);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -73,6 +77,11 @@ const UserNotification: React.FC = () => {
     });
     return () => handle();
   }, []);
+
+  // Gọi prop khi unreadCount thay đổi
+  useEffect(() => {
+    if (onUnreadCountChange) onUnreadCountChange(unreadCount);
+  }, [unreadCount, onUnreadCountChange]);
 
   const handleMarkAsRead = async (notificationId: string) => {
     try {

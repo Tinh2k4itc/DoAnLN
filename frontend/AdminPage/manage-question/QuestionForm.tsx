@@ -96,13 +96,13 @@ const QuestionForm: React.FC<Props> = ({ bankId, onSuccess, onClose, question, i
           createdQuestion = { ...question, content, type, level, options, questionBankId: question.questionBankId };
         }
       } else {
-        const bankId = question?.questionBankId || '';
+        // SỬA: chỉ truyền questionBankId, không truyền bankId vì kiểu dữ liệu không cho phép
         createdQuestion = await import('./QuestionApi').then(api => api.createQuestion(bankId, {
           content,
           type,
           level,
           options,
-          questionBankId: bankId
+          questionBankId: bankId // luôn truyền đúng bankId vào questionBankId
         }));
       }
       onSuccess && onSuccess(createdQuestion);
@@ -118,7 +118,7 @@ const QuestionForm: React.FC<Props> = ({ bankId, onSuccess, onClose, question, i
     <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-lg relative">
         <button className="absolute top-2 right-2 text-slate-400 hover:text-slate-700" onClick={onClose}>&times;</button>
-        <h2 className="text-2xl font-bold mb-4">{question ? 'Chỉnh sửa câu hỏi' : 'Chỉnh sửa câu hỏi'}</h2>
+        <h2 className="text-2xl font-bold mb-4">{question ? 'Chỉnh sửa câu hỏi' : 'Thêm câu hỏi mới'}</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <textarea value={content} onChange={e => setContent(e.target.value)} placeholder="Nội dung câu hỏi" className="w-full px-3 py-2 border rounded" required />
           <div className="flex gap-2">

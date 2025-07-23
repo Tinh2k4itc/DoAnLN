@@ -61,6 +61,8 @@ const UserForm: React.FC<UserFormProps> = ({ partId, onBack }) => {
   const [userEmail, setUserEmail] = useState('');
   const [userStudentId, setUserStudentId] = useState('');
   const [userFullName, setUserFullName] = useState('');
+  // Thêm state cho trạng thái câu hỏi
+  const [questionStatus, setQuestionStatus] = useState<{ [id: string]: 'unanswered' | 'answered' | 'review' }>({});
 
   // --- EFFECTS ---
   useEffect(() => {
@@ -123,21 +125,33 @@ const UserForm: React.FC<UserFormProps> = ({ partId, onBack }) => {
   }, [userName, part]);
 
   // --- LOGIC HANDLERS ---
+  // Khi chọn đáp án, cập nhật trạng thái
   const handleSelect = (qid: string, idx: number) => {
     if (submitted) return;
     setAnswers(a => {
-        const q = questions.find(q => q.id === qid);
-        if (isMultiChoice(q)) {
-            const arr = Array.isArray(a[qid]) ? [...(a[qid] as number[])] : [];
-            if (arr.includes(idx)) {
-                return { ...a, [qid]: arr.filter(i => i !== idx) };
-            } else {
-                return { ...a, [qid]: [...arr, idx] };
-            }
+      const q = questions.find(q => q.id === qid);
+      if (isMultiChoice(q)) {
+        const arr = Array.isArray(a[qid]) ? [...(a[qid] as number[])] : [];
+        let newArr;
+        if (arr.includes(idx)) {
+          newArr = arr.filter(i => i !== idx);
         } else {
-            return { ...a, [qid]: idx };
+          newArr = [...arr, idx];
         }
+        // Đánh dấu đã làm nếu có chọn đáp án, chưa làm nếu bỏ hết
+        setQuestionStatus(s => ({ ...s, [qid]: newArr.length > 0 ? 'answered' : (s[qid] === 'review' ? 'review' : 'unanswered') }));
+        return { ...a, [qid]: newArr };
+      } else {
+        // Đánh dấu đã làm nếu chọn đáp án
+        setQuestionStatus(s => ({ ...s, [qid]: idx !== null ? 'answered' : (s[qid] === 'review' ? 'review' : 'unanswered') }));
+        return { ...a, [qid]: idx };
+      }
     });
+  };
+
+  // Hàm đánh dấu phân vân
+  const handleToggleReview = (qid: string) => {
+    setQuestionStatus(s => ({ ...s, [qid]: s[qid] === 'review' ? (answers[qid] !== null && answers[qid] !== undefined && ((Array.isArray(answers[qid]) && (answers[qid] as any[]).length > 0) || (!Array.isArray(answers[qid]) && answers[qid] !== null))) ? 'answered' : 'unanswered' : 'review' }));
   };
 
   const handleConfirmSubmit = async () => {
@@ -350,6 +364,13 @@ const UserForm: React.FC<UserFormProps> = ({ partId, onBack }) => {
                         );
                     })}
                 </div>
+                {currentQuestion && (
+                  <div className="flex justify-end mb-2">
+                    <button type="button" className={`px-3 py-1 rounded border text-xs font-semibold ${questionStatus[currentQuestion.id]==='review' ? 'bg-yellow-400 text-white border-yellow-500' : 'bg-slate-200 text-slate-700 border-slate-300'}`} onClick={()=>handleToggleReview(currentQuestion.id)}>
+                      {questionStatus[currentQuestion.id]==='review' ? 'Bỏ phân vân' : 'Đánh dấu phân vân'}
+                    </button>
+                  </div>
+                )}
             </div>
         )}
         
@@ -426,16 +447,26 @@ const UserForm: React.FC<UserFormProps> = ({ partId, onBack }) => {
         <div className="bg-white rounded-xl shadow p-4">
           <div className="font-bold mb-2">Câu hỏi</div>
           <div className="grid grid-cols-5 md:grid-cols-4 gap-2">
-            {questions.map((q, idx) => (
-              <button key={q.id} type="button" onClick={()=>setCurrentIdx(idx)}
-                className={`w-10 h-10 rounded-lg border-2 flex items-center justify-center font-bold text-base
-                  ${currentIdx===idx ? 'bg-sky-600 text-white border-sky-600' :
-                    (Array.isArray(answers[q.id]) ? (answers[q.id] as number[]).length > 0 : answers[q.id] !== null)
-                    ? 'bg-blue-50 border-blue-500 text-blue-700' : 'bg-white border-slate-300 text-slate-500'}
-                `}>
-                {idx+1}
-              </button>
-            ))}
+            {questions.map((q, idx) => {
+              let status = questionStatus[q.id] || ((Array.isArray(answers[q.id]) ? (answers[q.id] as number[]).length > 0 : answers[q.id] !== null) ? 'answered' : 'unanswered');
+              return (
+                <button key={q.id} type="button" onClick={()=>setCurrentIdx(idx)}
+                  className={`w-10 h-10 rounded-lg border-2 flex items-center justify-center font-bold text-base
+                    ${currentIdx===idx ? 'bg-sky-600 text-white border-sky-600' :
+                      status === 'review' ? 'bg-yellow-100 border-yellow-400 text-yellow-700' :
+                      status === 'answered' ? 'bg-blue-50 border-blue-500 text-blue-700' :
+                      'bg-white border-slate-300 text-slate-500'}
+                  `}>
+                  {idx+1}
+                </button>
+              );
+            })}
+          </div>
+          <div className="flex flex-wrap gap-2 mt-3 text-xs">
+            <div className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded bg-sky-600"></span> Đang xem</div>
+            <div className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded bg-blue-500"></span> Đã làm</div>
+            <div className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded bg-yellow-400"></span> Phân vân</div>
+            <div className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded bg-slate-300"></span> Chưa làm</div>
           </div>
         </div>
       </div>

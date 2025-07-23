@@ -6,7 +6,7 @@ const tabs = [
   { id: 'results', label: 'Lịch sử bài thi', icon: ChartBarIcon },
 ];
 
-const UserCourseSidebar = ({ activeTab, onTabChange }: { activeTab: string, onTabChange: (id: string) => void }) => {
+const UserCourseSidebar = ({ activeTab, onTabChange, unreadCount = 0 }: { activeTab: string, onTabChange: (id: string) => void, unreadCount?: number }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const handleGoHome = () => {
     window.location.href = '/user';
@@ -51,6 +51,10 @@ const UserCourseSidebar = ({ activeTab, onTabChange }: { activeTab: string, onTa
             >
               <Icon className={`w-6 h-6 ${isActive ? 'text-white' : 'text-sky-600'}`} />
               {isExpanded && <span>{tab.label}</span>}
+              {/* Hiển thị badge đỏ ở tab Thông báo nếu có unreadCount > 0 */}
+              {isExpanded && tab.id === 'results' && unreadCount > 0 && (
+                <span className="ml-2 w-2.5 h-2.5 bg-red-500 rounded-full inline-block"></span>
+              )}
             </button>
           );
         })}

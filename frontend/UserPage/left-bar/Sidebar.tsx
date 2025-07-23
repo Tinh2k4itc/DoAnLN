@@ -273,6 +273,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItemId, onItemClick, onExpandCh
               isExpanded={isExpanded}
               onClick={() => handleItemClick(item.id)}
             />
+            {/* Badge đỏ cho tab Thông báo */}
+            {item.id === 'notifications' && unreadNotificationCount > 0 && (
+              <span style={{ position: 'absolute', top: 10, right: 18 }} className="w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-slate-900 block"></span>
+            )}
           </div>
         ))}
         

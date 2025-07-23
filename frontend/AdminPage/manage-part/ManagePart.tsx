@@ -870,8 +870,8 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
               </div>
             )}
             <div className="flex gap-4 mb-4">
-              <button className="px-4 py-2 bg-green-600 text-white rounded font-semibold" type="button" onClick={()=>{ setEditingQuestion({ content: '', type: 'truefalse', level: 'easy', options: defaultOptions['truefalse'] }); setAddingQuestion(true); }}>
-                + Thêm thủ công
+              <button className="px-4 py-2 bg-green-600 text-white rounded font-semibold" type="button" onClick={()=>{ setEditingQuestion(undefined); setAddingQuestion(true); }}>
+                + Thêm câu hỏi
               </button>
               <button className="px-4 py-2 bg-blue-600 text-white rounded font-semibold" type="button" onClick={async () => {
                 if (!showView.part) return;
@@ -1002,11 +1002,17 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
               <button type="button" className="px-4 py-2 bg-slate-200 rounded" onClick={()=>setShowSelectQuestionModal(false)}>Hủy</button>
               <button type="button" className="px-4 py-2 bg-sky-600 text-white rounded" onClick={async()=>{
                 if (!showView.part) return;
-                const toAdd = bankQuestions.filter(q => selectedBankQuestions.includes(String(q.id)));
+                // Lọc trùng câu hỏi
+                const existingIds = (showView.part.questions || []).map(q => String(q.id));
+                const toAdd = bankQuestions.filter(q => selectedBankQuestions.includes(String(q.id)) && !existingIds.includes(String(q.id)));
+                const duplicated = bankQuestions.filter(q => selectedBankQuestions.includes(String(q.id)) && existingIds.includes(String(q.id)));
                 const newQuestions = [...(showView.part.questions || []), ...toAdd];
                 await updatePart(String(showView.part.id), { ...showView.part, questions: newQuestions });
                 setShowView({ open: true, part: { ...showView.part, questions: newQuestions } });
                 setShowSelectQuestionModal(false);
+                if (duplicated.length > 0) {
+                  alert('Các câu hỏi sau đã có trong đề và không được thêm lại:\n' + duplicated.map((q, idx) => `${q.content}`).join('\n'));
+                }
               }}>Thêm vào đề</button>
             </div>
                     </div>
@@ -1022,11 +1028,11 @@ const ManagePart: React.FC<ManagePartProps> = ({ courseId }) => {
               aria-label="Đóng"
             >×</button>
             <h3 className="text-2xl font-bold mb-6 text-center">
-              {addingQuestion ? 'Thêm câu hỏi thủ công' : 'Chỉnh sửa câu hỏi trong bài thi'}
+              {addingQuestion ? 'Thêm câu hỏi' : 'Chỉnh sửa câu hỏi trong bài thi'}
             </h3>
             <QuestionForm
               bankId={''}
-              question={editingQuestion}
+              question={addingQuestion ? undefined : editingQuestion}
               isCustomQuestion={true}
               onSuccess={addingQuestion ? handleAddNewQuestion : handleSaveEditQuestion}
               onClose={() => { setAddingQuestion(false); setEditingQuestion(null); }}

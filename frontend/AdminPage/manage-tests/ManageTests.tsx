@@ -387,7 +387,7 @@ const ManageTests: React.FC<ManageTestsProps> = ({ courseId }) => {
               );
             })()}
             <div className="flex gap-2 mb-4">
-              <button className="px-4 py-2 bg-green-600 text-white rounded" onClick={()=>setShowAddManual({open:true, testId:showDetail.test!.id})}>+ Thêm thủ công</button>
+              <button className="px-4 py-2 bg-green-600 text-white rounded" onClick={()=>setShowAddManual({open:true, testId:showDetail.test!.id})}>+ Thêm câu hỏi</button>
             </div>
             <div className="font-semibold mt-4 mb-2">Danh sách câu hỏi:</div>
             <ul className="list-decimal ml-6">

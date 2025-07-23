@@ -40,9 +40,10 @@ const UserCourseResults: React.FC<{ courseId: string }> = ({ courseId }) => {
       const res = await axios.get('https://doanln.onrender.com/api/exam-results');
       const partRes = await axios.get('https://doanln.onrender.com/api/parts');
       setParts(partRes.data);
-      // Lọc kết quả của user theo userEmail - hiển thị TẤT CẢ bài thi
+      // Lọc kết quả của user theo userEmail và chỉ lấy bài thi thuộc môn hiện tại
       const myResults = res.data.filter((r:any) => {
-        return r.userEmail === user?.email;
+        const part = partRes.data.find((p:any) => p.id === r.testId);
+        return r.userEmail === user?.email && part && part.courseId === courseId;
       });
       setResults(myResults);
       setFilteredResults(myResults);

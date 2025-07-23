@@ -4,12 +4,14 @@ import UserCourseSidebar from './left-bar/UserCourseSidebar';
 import UserCourseTests from './tests/UserCourseTests';
 import UserCourseResults from './results/UserCourseResults';
 import UserForm from './user-test/UserForm';
+import UserNotification from '../UserNotification';
 
 const MyCourseDetailPage: React.FC = () => {
   const { id } = useParams();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<'tests'|'results'>('tests');
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // Tự động chuyển tab sang 'results' nếu path là /results hoặc có query testId
   useEffect(() => {
@@ -18,9 +20,14 @@ const MyCourseDetailPage: React.FC = () => {
     }
   }, [location.pathname, searchParams]);
 
+  // Khi chuyển sang tab 'results', setUnreadCount(0)
+  useEffect(() => {
+    if (activeTab === 'results') setUnreadCount(0);
+  }, [activeTab]);
+
   return (
     <div className="flex min-h-screen bg-slate-50">
-      <UserCourseSidebar activeTab={activeTab} onTabChange={(id) => setActiveTab(id as 'tests' | 'results')} />
+      <UserCourseSidebar activeTab={activeTab} onTabChange={(id) => setActiveTab(id as 'tests' | 'results')} unreadCount={unreadCount} />
       <main className="flex-1 p-8">
         <Routes>
           <Route index element={
